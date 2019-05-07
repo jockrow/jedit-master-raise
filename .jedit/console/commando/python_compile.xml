@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<!DOCTYPE COMMANDO SYSTEM "commando.dtd">
+<COMMANDO>
+	<UI>
+		 <CAPTION LABEL="File Location">
+			<FILE_ENTRY LABEL="py file" VARNAME="file" EVAL='buffer.getPath()' />
+			<ENTRY LABEL="Application parameters" VARNAME="args" />
+		</CAPTION>
+	</UI>
+	<COMMANDS>
+		<COMMAND SHELL="System" DIR="buffer.getDirectory();">
+			buf = new StringBuffer();
+			if(file.substring(file.length() - 2).toLowerCase().equals("py")){
+				buf.append("python -m py_compile \"" + file + "\"");
+				return buf.toString();
+			}
+			else{
+				Macros.message(view, "the extension mus be py");
+			}
+		</COMMAND>
+	</COMMANDS>
+</COMMANDO>

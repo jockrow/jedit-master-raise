@@ -1,0 +1,24 @@
+/************************************************/
+/*      @author Richard Martínez 2017/12/21		*/
+/************************************************/
+/**
+ * Method searchBack()
+ * Find selection to back in document
+ */
+
+void searchBack(){
+	SearchAndReplace.setSearchString(textArea.getSelectedText());
+	SearchAndReplace.setAutoWrapAround(true);
+	SearchAndReplace.setReverseSearch(true);
+	SearchAndReplace.setIgnoreCase(true);
+	SearchAndReplace.setSearchFileSet(new CurrentBufferSet());
+	SearchAndReplace.find(view);
+}
+
+if(textArea.getSelectionCount() == 1){
+	searchBack();
+}
+else if(textArea.getSelectionCount() == 0){
+	textArea.setSelection(textobjects.TextObjectsPlugin.word(textArea, textArea.getCaretPosition(), false));
+	searchBack();
+}

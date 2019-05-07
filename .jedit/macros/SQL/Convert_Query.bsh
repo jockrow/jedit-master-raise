@@ -1,0 +1,283 @@
+/************************************************/
+/*      @author Richard Martínez 2015/04/21     */
+/************************************************/
+/**
+ * Convert a querys an another query
+ 
+	SELECT_UPDATE	SELECT_INSERT	INSERT_SELECT	INSERT_UPDATE	INSERT_CSV	UPDATE_INSERT	UPDATE_SELECT	UPDATE_CSV	CSV_INSERT	CSV_SELECT	CSV_UPDATE
+putWhere	ok	ok	-	-	-	-	ok		-	-	-
+whereIn	ok	ok	-	-	-				-	-	-
+beauty	ok	ok	ok		-
+return	-	-	ok	ok	ok
+convert	ok	ok	ok	ok	ok	ok	ok	ok	ok	ok	ok
+comments	ok	ok
+;
+
+SELECT ESTADO_FINCA, 'ACT'
+, CN_USUARIO_MODIFICACION, 'SICA_USER'
+, FECHA_MODIFICACION, SYSDATE
+, Fecha_Inactivacion, TO_DATE('31/01/2016', 'dd/mm/yyyy')
+, Area_Cultivo, 6,24
+FROM SICA.SC_FINCA
+WHERE CODIGO_SICA ='1700100378'
+ORDER BY ESTADO_FINCA
+;
+
+SC_FINCA
+FIELD	VALUE
+CODIGO_SICA	'1700100378'
+ESTADO_FINCA	'ACT'
+CN_USUARIO_MODIFICACION	'SICA_USER'
+FECHA_MODIFICACION	SYSDATE
+Fecha_Inactivacion	TO_DATE('31/01/2016','dd/mm/yyyy')
+Area_Cultivo	6,24
+
+INSERT INTO SICA.SC_FINCA (CODIGO_SICA, ESTADO_FINCA, CN_USUARIO_MODIFICACION, FECHA_MODIFICACION, Fecha_Inactivacion, Area_Cultivo)
+VALUES ('1700100378', 'ACT', 'SICA_USER', SYSDATE, TO_DATE('31/01/2016', 'dd/mm/yyyy'), 6,24);
+
+UPDATE SICA.SC_FINCA
+SET CODIGO_SICA = '1700100378'
+, ESTADO_FINCA = 'ACT'
+, CN_USUARIO_MODIFICACION = 'SICA_USER'
+, FECHA_MODIFICACION = SYSDATE
+, Fecha_Inactivacion = TO_DATE('31/01/2016','dd/mm/yyyy')
+, Area_Cultivo = 6,24
+WHERE CODIGO_SICA = '2529300114';
+*/
+import javax.swing.border.*;
+
+String conversion = "";
+ButtonGroup grpFrom = new ButtonGroup();
+ButtonGroup grpTo = new ButtonGroup();
+JRadioButton rbFromInsert = new JRadioButton("INSERT");
+JRadioButton rbToInsert = new JRadioButton("INSERT");
+JRadioButton rbFromSelect = new JRadioButton("SELECT");
+JRadioButton rbToSelect = new JRadioButton("SELECT");
+JRadioButton rbFromUpdate = new JRadioButton("UPDATE");
+JRadioButton rbToUpdate = new JRadioButton("UPDATE");
+JRadioButton rbFromCsv = new JRadioButton("CSV");
+JRadioButton rbToCsv = new JRadioButton("CSV");
+JeditSql sql = new JeditSql();
+String query1 = "";
+String query2 = "";
+
+void showGui(){
+	KeyListener ka = new KeyListener(){
+		public void keyReleased(KeyEvent e){
+			if(e.getKeyCode() == KeyEvent.VK_ESCAPE){
+				dialog.dispose();
+			}
+			else if(KeyEvent.VK_LEFT <= e.getKeyCode() && e.getKeyCode() <= KeyEvent.VK_DOWN){
+				validation();
+			}
+		}
+
+		public void keyPressed(KeyEvent e){}
+		public void keyTyped(KeyEvent e){}
+	};
+
+	ActionListener al = new ActionListener(){
+		public boolean actionPerformed(ActionEvent e){
+			switch(e.getActionCommand()){
+				case "Convert":
+					setConversion();
+					String queryType = "";
+					dialog.dispose();
+
+					if(conversion.equals("CSV_SELECT")){
+						queryType = conversion;
+					}
+					else if(query1.equals("CSV") && !query2.equals("CSV_SELECT")){
+						queryType = "CSV_";
+					}
+
+					if(sql.hasSyntaxError(queryType)){
+						return false;
+					}
+
+					processText();
+				break;
+				case "Cancel":
+					dialog.dispose();
+				break;
+				default:
+					validation();
+				break;
+			}
+
+			return true;
+		}
+	};
+
+	SwingUtilities.invokeLater(new Runnable(){
+	public void run(){
+		rbFromUpdate.requestFocus();
+	}
+	});
+
+	dialog = new JDialog(view, "Convert Query", true);
+	content = new JPanel(new BorderLayout());
+	content.setBorder(new EmptyBorder(12, 12, 12, 12));
+	dialog.setContentPane(content);
+	fieldPanel = new JPanel(new GridLayout(5, 1, 0, 6));
+
+	fieldPanel.add(new JLabel("From Query"));
+	fieldPanel.add(new JLabel("To Query"));
+
+	rbFromInsert.setActionCommand("From");
+	rbFromInsert.addKeyListener(ka);
+	rbFromInsert.addActionListener(al);
+	grpFrom.add(rbFromInsert);
+	fieldPanel.add(rbFromInsert);
+
+	rbToInsert.setActionCommand("To");
+	grpTo.add(rbToInsert);
+	fieldPanel.add(rbToInsert);
+
+	rbFromSelect.setActionCommand("From");
+	rbFromSelect.addKeyListener(ka);
+	rbFromSelect.addActionListener(al);
+	grpFrom.add(rbFromSelect);
+	fieldPanel.add(rbFromSelect);
+
+	rbToSelect.setActionCommand("To");
+	grpTo.add(rbToSelect);
+	fieldPanel.add(rbToSelect);
+
+	rbFromUpdate.setActionCommand("From");
+	rbFromUpdate.addKeyListener(ka);
+	rbFromUpdate.addActionListener(al);
+	grpFrom.add(rbFromUpdate);
+	fieldPanel.add(rbFromUpdate);
+
+	rbToUpdate.setActionCommand("To");
+	grpTo.add(rbToUpdate);
+	fieldPanel.add(rbToUpdate);
+
+	rbFromCsv.setActionCommand("From");
+	rbFromCsv.addKeyListener(ka);
+	rbFromCsv.addActionListener(al);
+	grpFrom.add(rbFromCsv);
+	fieldPanel.add(rbFromCsv);
+
+	rbToCsv.setActionCommand("To");
+	grpTo.add(rbToCsv);
+	fieldPanel.add(rbToCsv);
+
+	rbToUpdate.setEnabled(false);
+	rbFromUpdate.setSelected(true);
+	rbToSelect.setSelected(true);
+
+	content.add(fieldPanel, "North");
+
+	buttonPanel = new JPanel();
+	buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
+	buttonPanel.setBorder(new EmptyBorder(12, 50, 0, 80));
+	ok = new JButton("Convert");
+	cancel = new JButton("Cancel");
+	dialog.getRootPane().setDefaultButton(ok);
+	buttonPanel.add(ok);
+	buttonPanel.add(Box.createHorizontalStrut(6));
+	buttonPanel.add(cancel);
+	content.add(buttonPanel, "South");
+
+	ok.addActionListener(al);
+	cancel.addActionListener(al);
+
+	dialog.pack();
+	dialog.setLocationRelativeTo(view);
+	dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+	dialog.setVisible(true);
+}
+
+void setConversion(){
+	Enumeration e = grpFrom.getElements();
+
+	while(e.hasMoreElements() == true){
+		JRadioButton r = (JRadioButton) e.nextElement();
+		if(r.isSelected()){
+			query1 = r.getText();
+			break;
+		}
+	}
+
+	e = grpTo.getElements();
+	while(e.hasMoreElements() == true){
+		JRadioButton r = (JRadioButton) e.nextElement();
+		if(r.isSelected()){
+			query2 = r.getText();
+			break;
+		}
+	}
+
+	conversion = query1 + "_" + query2;
+}
+
+String getResult(){
+	return conversion;
+}
+
+void validation(){
+	rbToInsert.setEnabled(true);
+	rbToSelect.setEnabled(true);
+	rbToUpdate.setEnabled(true);
+	rbToCsv.setEnabled(true);
+
+	if(rbFromInsert.isSelected()){
+		rbToInsert.setEnabled(false);
+		rbToCsv.setSelected(true);
+	}
+	else if(rbFromSelect.isSelected()){
+		rbToSelect.setEnabled(false);
+		rbToCsv.setEnabled(false);
+		rbToUpdate.setSelected(true);
+	}
+	else if(rbFromUpdate.isSelected()){
+		rbToUpdate.setEnabled(false);
+		rbToSelect.setSelected(true);
+	}
+	else if(rbFromCsv.isSelected()){
+		rbToCsv.setEnabled(false);
+		rbToInsert.setSelected(true);
+	}
+}
+
+void processText(){
+	String query1 = conversion.split("_")[0];
+	String query2 = conversion.split("_")[1];
+	JEditBuffer bfTmp = openTempBuffer();
+
+	if(!query1.equals("CSV")){
+		replaceBuffer("[ \\t]+", " ", "r");
+	}
+	switch(conversion){
+		case "CSV_UPDATE":
+			sql.convertQuery("CSV", "INSERT");
+			sql.convertQuery("INSERT", "UPDATE");
+		break;
+		case "INSERT_SELECT":
+			sql.convertQuery("INSERT", "CSV");
+			replaceBuffer("(Structure table: )(\\w+)(\\nFIELD\\tVALUE)((\\n.*)+)", "\"SELECT\" + _4.replaceAll(\"(?m)(^|\\t)\", \", \") + \"\\nFROM \" + _2", "br");
+			replaceBuffer("SELECT, \\n, ", "SELECT ", "r");
+		break;
+		case "SELECT_INSERT":
+			sql.convertQuery("SELECT", "UPDATE");
+			replaceBuffer("(\\bSET\\b)((.*\\n)+)(\\bWHERE\\b[ \\t]*)((.*\\n*)+)", "$1 $5, $2", "ir");
+		case "UPDATE_INSERT":
+			sql.convertQuery("UPDATE", "CSV");
+			replaceBuffer("Structure table: (" + sql.REGEXP_SQL_OBJECT + ")\\nFIELD\\tVALUE.*\\n", "$1\\n", "ir");
+			sql.convertQuery("CSV", "INSERT");
+		break;
+		default:
+			sql.convertQuery(query1, query2);
+		break;
+	}
+
+	if(!query1.equals("CSV") && !query2.equals("CSV")){
+		textArea.selectAll();
+		sql.beautyQuery("ui");
+	}
+	closeTempBuffer(bfTmp);
+}
+
+showGui();

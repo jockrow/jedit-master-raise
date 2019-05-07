@@ -1,0 +1,248 @@
+/************************************************
+*			@author Richard Martínez 2012/02/22		*
+************************************************/
+/**
+ * Method genLineNumbers()
+ * Generate a numbers for each line, from min number to max number lines to each range
+ */
+
+import javax.swing.border.*;
+import javax.swing.text.InternationalFormatter;
+
+int maxValidateNumber = 30000;
+int minNumber = 0;
+int maxNumber = 0;
+int range = 0;
+String preText = "";
+
+String LBL_TEXT = "Texts";
+String LBL_NUMBERS = "Numbers";
+
+String prevIntValue = new String("");
+String prevTextValue = new String("");
+String prevRadio = new String("");
+
+public void genLineNumbers(View view) {
+	private static String TITLE = "Enter the parameters to will generate the numbers";
+	private static String LBL_RANGE = "Range to each number:";
+	private static String LBL_PREFIX = "Prefix Text:";
+
+	dialog = new JDialog(view, TITLE, false);
+	content = new JPanel(new BorderLayout());
+	content.setBorder(new EmptyBorder(3, 12, 2, 12));
+	dialog.setContentPane(content);
+
+	InternationalFormatter formatNumber = new InternationalFormatter();
+	formatNumber.setMinimum(new Integer(1));
+
+	InternationalFormatter formatMaxNumber = new InternationalFormatter();
+	formatMaxNumber.setMinimum(new Integer(1));
+
+	fieldPanel = new JPanel(new GridLayout(4, 1, 0, 1));
+
+	JFormattedTextField minField = new JFormattedTextField(formatNumber);
+	minField.setValue(1);
+	minLabel = new JLabel("Initial Number:");
+
+	JFormattedTextField maxField = new JFormattedTextField(formatMaxNumber);
+	maxLabel = new JLabel("Max Number Lines:");
+
+	JTextField rangeField = new JTextField("");
+	rangeLabel = new JLabel(LBL_PREFIX);
+
+	JRadioButton rbText = new JRadioButton(LBL_TEXT);
+	rbText.setActionCommand(LBL_TEXT);
+	rbText.addActionListener(this);
+	rbText.setSelected(true);
+	
+	JRadioButton rbNumbers = new JRadioButton(LBL_NUMBERS);
+	rbNumbers.setActionCommand(LBL_NUMBERS);
+	rbNumbers.addActionListener(this);
+
+	ButtonGroup group = new ButtonGroup();
+	group.add(rbText);
+	group.add(rbNumbers);
+	fieldPanel.add(rbText);
+	fieldPanel.add(rbNumbers);
+
+	fieldPanel.add(minLabel);
+	fieldPanel.add(minField);
+	fieldPanel.add(maxLabel);
+	fieldPanel.add(maxField);
+	fieldPanel.add(rangeLabel);
+	fieldPanel.add(rangeField);
+
+	content.add(fieldPanel, "North");
+
+	lblValidate = new JTextArea("");
+	lblValidate.setEditable(false);
+	lblValidate.setBackground(content.getBackground());
+
+	validationPanel = new JPanel();
+	validationPanel.add(lblValidate);
+	validationPanel.setBorder(new EmptyBorder(0, 180, 2, 180));
+	content.add(validationPanel, "Center");
+
+	buttonPanel = new JPanel();
+	buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
+	buttonPanel.setBorder(new EmptyBorder(3, 12, 12, 12));
+	ok = new JButton("OK");
+	cancel = new JButton("Cancel");
+	ok.setPreferredSize(cancel.getPreferredSize());
+	dialog.getRootPane().setDefaultButton(ok);
+	buttonPanel.add(ok);
+	buttonPanel.add(Box.createHorizontalStrut(6));
+	buttonPanel.add(cancel);
+	content.add(buttonPanel, "South");
+
+	ok.addActionListener(this);
+	cancel.addActionListener(this);
+
+	KeyListener keyListener = new KeyListener() {
+		public void keyReleased(KeyEvent keyEvent) {
+			if (keyEvent.getKeyCode() == KeyEvent.VK_ESCAPE) {
+				dialog.dispose();
+			}
+			else{
+				validation();
+			}
+		}
+
+		public void keyPressed(KeyEvent keyEvent){}
+		public void keyTyped(KeyEvent keyEvent){}
+	};
+
+	rbText.addKeyListener(keyListener);
+	rbNumbers.addKeyListener(keyListener);
+	maxField.addKeyListener(keyListener);
+	rangeField.addKeyListener(keyListener);
+
+	dialog.pack();
+	dialog.setLocationRelativeTo(view);
+	dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+	dialog.setVisible(true);
+
+	// this method will be called when a button is clicked
+	// or when ENTER is pressed
+	void actionPerformed(e){
+		if(e.getActionCommand().equals(LBL_NUMBERS) || e.getActionCommand().equals(LBL_TEXT)){
+			if(e.getActionCommand().equals(LBL_NUMBERS)){
+				rangeLabel.setText(LBL_RANGE);
+				
+				if(prevRadio != e.getActionCommand()){
+					prevTextValue = rangeField.getText();
+					rangeField.setText(prevIntValue);
+					prevIntValue = rangeField.getText();
+				}
+			}
+			else{
+				rangeLabel.setText(LBL_PREFIX);
+				
+				if(prevRadio != e.getActionCommand()){
+					prevIntValue = rangeField.getText();
+					rangeField.setText(prevTextValue);
+					prevTextValue = rangeField.getText();
+				}
+			}
+			
+			prevRadio = e.getActionCommand();
+			rangeLabel.setText(rangeLabel.getText());
+			validation();
+		}
+		else{
+			if(e.getSource() != cancel)
+			{
+				if(processText()){
+					dialog.dispose();
+				}
+			}
+			else{
+				dialog.dispose();
+			}
+		}
+	}
+
+	void displayError(String message){
+		lblValidate.setForeground(Color.red);
+		lblValidate.setText(message);
+		ok.setEnabled(false);
+	}
+
+	void setVariables(){
+		minNumber = Integer.valueOf(minField.getText());
+		maxNumber = Integer.valueOf(maxField.getText());
+		if(rbNumbers.isSelected()){
+			range = Integer.valueOf(rangeField.getText());
+		}
+		else{
+			preText = rangeField.getText();
+		}
+	}
+
+	validation(){
+		try{
+			String errorMessage = "";
+			setVariables();
+
+			int postTotalLines = 0;
+			if(rbNumbers.isSelected()){
+				postTotalLines = maxNumber;
+			}
+			else{
+				postTotalLines = maxNumber - minNumber + 1;
+			}
+
+			lblValidate.setText("OK, will generate " + postTotalLines + " lines, (max number is:" + maxValidateNumber + ")");
+
+			if(postTotalLines>maxValidateNumber){
+				errorMessage = "Exceeded the limit " + maxValidateNumber + " lines";
+			}
+
+			if(errorMessage!=""){
+				displayError(errorMessage);
+			}
+			else{
+				lblValidate.setForeground(Color.black);
+				ok.setEnabled(true);
+			}
+		}
+		catch(NumberFormatException ex){
+			displayError("The fields must be Numbers");
+		}
+	}
+	
+	boolean processText(){
+		setVariables();
+		String content = "";
+
+		if(lblValidate.getText().substring(0,4).equals("OK, ")){
+			if(rbNumbers.isSelected()){
+				for(int i=0; i<maxNumber; i++){
+					content += minNumber + "\n";
+					minNumber += range;
+				}
+			}
+			else{
+				for(int i=minNumber; i<=maxNumber; i++){
+					content += preText + i + "\n";
+				}
+			}
+
+			content = content.replaceAll("\n\\z", "");
+			textArea.setSelectedText(content);
+			Registers.setRegister('$', content);
+			textArea.goToBufferEnd(false);
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+}
+
+if(buffer.isReadOnly()){
+	Macros.error(view, "Buffer is read-only.");
+}
+else{
+	genLineNumbers(view);
+}

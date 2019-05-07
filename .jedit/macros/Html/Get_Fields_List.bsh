@@ -1,0 +1,33 @@
+/************************************************
+*			@author Richard Martínez 2011/05/13	*
+*************************************************/
+/**
+ * Method getFieldsList()
+ * Saca una lista de todos los campos de un archivo html
+ */
+public void getFieldsList(){
+	String typeFields = "(select|input|textarea|datalist)";
+
+	if(!findBuffer("<[ \\t]*" + typeFields + "[ \\t].*>", "air")){
+		Macros.message(view, "Fields not found");
+		return;
+	}
+
+	String fields = "";
+	textArea.goToBufferStart(false);
+	while(findBuffer("<[ \\t]*" + typeFields + "[ \\t].*>", "ir")){
+		fields += textArea.getSelectedText() + "\n";
+	}
+
+	JEditBuffer bfTmp = new JEditBuffer();
+	jEdit.newFile(view);
+	textArea.setSelectedText(fields);
+	replaceBuffer("<[ \\t]*" + typeFields, "\\n$0", "ir");
+	replaceBuffer("(^\\n)|(^.*type[ \\t]*=[ \\t\"\']*(submit|reset|button).*\\n)", "", "ir");
+	replaceBuffer(">.*", ">", "ir");
+
+	textArea.selectAll();
+	Registers.copy(textArea,'$');
+}
+
+getFieldsList();

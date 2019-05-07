@@ -1,0 +1,62 @@
+/************************************************
+*			@author Richard Martínez 2010		*
+*************************************************/
+/**
+* Method identifyTmpTables()
+* Identifica las variables temporales de un sp
+*/
+public void identifyTmpTables(){
+	String notFound = "Not found temp tables";
+
+	if(findBuffer("#", "a")){
+		String strTmpTables = "";
+		String strUniqueTable = "";
+
+		textArea.selectAll();
+		String selectedText = textArea.getSelectedText();
+		jEdit.newFile(view);
+		textArea.setSelectedText(selectedText);
+
+		//Quito todos los comentarios para no usar las tablas que se encuentran en ellos
+		replaceBuffer("[ \\t]*--.*|/\\*([\\n\\t ]*([#\\w áéíóú]+\\n)+[\\n\\t ]*)+\\*/", "", "ir");
+
+		//no toma las llaves primarias de la tabla temporal como si fuera tabla, ejemplo: xll#SPDI
+		replaceBuffer("\\w+#\\b\\w+\\b", "\\n$0\\n", "ir");
+		replaceBuffer("(\\w+)(#)(\\b\\w+\\b)", "$1__$3", "ir");
+		replaceBuffer("#{1,2}\\b[^ 0-9\\(]+\\w+\\b", "\\n$0\\n", "ir");
+		replaceBuffer("^.*#[!\"$%&'\\(\\)*+,-./:;=>?@\\[\\\\\\]^_`{|}~].*\\n", "", "ir");
+		// reemplazo todas las líneas que no comienzan por la tabla tempora (#temporal)
+		replaceBuffer("^[^#].*(\\n|\\z)", "", "ir");
+		// quito los posibles caracteres extraños
+		replaceBuffer("[!\"$%&'\\(\\)*+,-./:;=>?@\\[\\\\\\]^`{|}~]", "", "r");
+		replaceBuffer("(^[ \\t]+|[ \\t]+$)", "", "r");
+
+		textArea.selectAll();
+		selectedText = textArea.getSelectedText();
+
+		textArea.selectAll();
+		textArea.toUpperCase();
+		TextToolsSorting.deleteDuplicates(view, textArea);
+
+		replaceBuffer("^", "DROP TABLE ", "ir");
+		replaceBuffer("^DROP TABLE ##", "--DROP TABLE ##", "r");
+		TextToolsSorting.sortLines(textArea,false);
+		textArea.goToBufferEnd(false);
+		textArea.insertEnterAndIndent();
+		textArea.insertEnterAndIndent();
+		replaceBuffer("\\A^\\n", "", "r");
+
+		closeTempBuffer(bfTmp);
+		
+		textArea.goToBufferStart(false);
+		EditBus.send(new PositionChanging(editPane));
+		Registers.paste(textArea,'$',false);
+		textArea.goToBufferStart(true);
+		replaceSelection("DROP TABLE", "SELECT * FROM", "i");
+	}
+	else{
+		Macros.message(view, notFound);
+	}
+}
+
+identifyTmpTables();

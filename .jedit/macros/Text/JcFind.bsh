@@ -1,0 +1,43 @@
+/*
+################################################################################
+
+	JEdit
+
+################################################################################
+
+	FILE : JcFind.bsh							TYPE : BeanShell
+
+	Copyright (C) 2006 Fabio Crovatto 				www.javahouse.netsons.org
+
+################################################################################
+	DESCRIPTION :
+	This BeanShell script search directly the selected text.
+
+################################################################################
+	 HISTORY :
+VER. 1.0
+02.02.06
+	- Released;
+================================================================================
+*/
+void searchNext(){
+	SearchAndReplace.setSearchString(textArea.getSelectedText());
+	SearchAndReplace.setAutoWrapAround(true);
+	SearchAndReplace.setReverseSearch(false);
+	SearchAndReplace.setIgnoreCase(true);
+	SearchAndReplace.setSearchFileSet(new CurrentBufferSet());
+	SearchAndReplace.find(view);
+}
+
+if (textArea.getSelectionCount() == 1)
+{
+	searchNext();
+}
+else if (textArea.getSelectionCount() == 0)
+{
+	textArea.setSelection(textobjects.TextObjectsPlugin.word(textArea, textArea.getCaretPosition(), false));
+	if (textArea.getSelectionCount() == 0){
+		return;
+	}
+	searchNext();
+}

@@ -1,0 +1,193 @@
+/************************************************
+*			@author Richard Martínez 2017				*
+*************************************************/
+
+/**
+* Get the letter or Number from column:
+* @example
+*	11 To: K
+*	or 731 To: ABC
+*/
+
+import javax.swing.border.*;
+import javax.swing.text.InternationalFormatter;
+import java.util.regex.Pattern;
+
+void showGui(){
+	private static String TITLE = "Get Value From Column";
+	String LBL_NUMBERS = "Number to Char";
+	String LBL_TEXT = "Char to Number";
+	String COPY_LETTER = "Copy Letter Column";
+	String COPY_NUMBER = "Copy Number Column";
+
+	KeyListener keyListener = new KeyListener(){
+		public void keyReleased(KeyEvent keyEvent){
+			if (keyEvent.getKeyCode() == KeyEvent.VK_ESCAPE){
+				dialog.dispose();
+			}
+			else{
+				validation();
+			}
+		}
+
+		public void keyPressed(KeyEvent keyEvent){}
+		public void keyTyped(KeyEvent keyEvent){}
+	};
+
+	dialog = new JDialog(view, TITLE, false);
+	content = new JPanel(new BorderLayout());
+	content.setBorder(new EmptyBorder(12, 12, 12, 12));
+	dialog.setContentPane(content);
+	fieldPanel = new JPanel(new GridLayout(3, 3, 2, 2));
+
+	InternationalFormatter formatNumber = new InternationalFormatter();
+	formatNumber.setMinimum(new Integer(1));
+	
+	lblValidate = new JTextArea("");
+	lblValidate.setEditable(false);
+	lblValidate.setBackground(content.getBackground());
+
+	validationPanel = new JPanel();
+	validationPanel.add(lblValidate);
+	validationPanel.setBorder(new EmptyBorder(0, 30, 20, 30));
+	content.add(validationPanel, "Center");
+	
+	JFormattedTextField txtNumberColumn = new JFormattedTextField(formatNumber);
+	txtNumberColumn.setValue(1);
+	txtNumberColumn.addKeyListener(keyListener);
+	fieldPanel.add(new JLabel("Number Column"));
+	fieldPanel.add(txtNumberColumn);
+	
+	JTextField txtLetterColumn = new JTextField("A");
+	txtLetterColumn.setEditable(false);
+	txtLetterColumn.addKeyListener(keyListener);
+	fieldPanel.add(new JLabel("Letter Column"));
+	fieldPanel.add(txtLetterColumn);
+
+	JRadioButton rbNumbers = new JRadioButton(LBL_NUMBERS);
+	rbNumbers.setActionCommand(LBL_NUMBERS);
+	rbNumbers.addActionListener(this);
+	rbNumbers.setSelected(true);
+
+	JRadioButton rbText = new JRadioButton(LBL_TEXT);
+	rbText.setActionCommand(LBL_TEXT);
+	rbText.addActionListener(this);
+	
+	ButtonGroup group = new ButtonGroup();
+	group.add(rbText);
+	group.add(rbNumbers);
+	fieldPanel.add(rbNumbers);
+	fieldPanel.add(rbText);
+	content.add(fieldPanel, "North");
+	
+	// add a panel containing the buttons
+	buttonPanel = new JPanel();
+	buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
+	buttonPanel.setBorder(new EmptyBorder(12, 30, 0, 30));
+	cancel = new JButton("Cancel");
+	copy = new JButton(COPY_LETTER);
+	dialog.getRootPane().setDefaultButton(copy);
+	buttonPanel.add(Box.createHorizontalStrut(6));
+	buttonPanel.add(copy);
+	buttonPanel.add(cancel);
+	content.add(buttonPanel, "South");
+
+	cancel.addActionListener(this);
+	copy.addActionListener(this);
+
+	dialog.pack();
+	dialog.setLocationRelativeTo(view);
+	dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+	dialog.setVisible(true);
+
+	void actionPerformed(e){
+		if(e.getActionCommand().equals(LBL_NUMBERS) || e.getActionCommand().equals(LBL_TEXT)){
+			if(e.getActionCommand().equals(LBL_NUMBERS)){
+				txtNumberColumn.setEditable(true);
+				txtLetterColumn.setEditable(false);
+				copy.setText(COPY_LETTER);
+			}
+			else{
+				txtNumberColumn.setEditable(false);
+				txtLetterColumn.setEditable(true);
+				copy.setText(COPY_NUMBER);
+			}
+			
+			validation();
+		}
+		else{
+			if(e.getSource() != cancel){
+				if(e.getSource() == copy){
+					if(rbNumbers.isSelected()){
+						Registers.setRegister('$', txtLetterColumn.getText());
+					}
+					else{
+						Registers.setRegister('$', txtNumberColumn.getText());
+					}
+				}
+			}
+			else{
+				dialog.dispose();
+			}
+		}
+	}
+	
+	boolean displayError(String message){
+		lblValidate.setForeground(Color.red);
+		lblValidate.setText(message);
+		
+		if(rbNumbers.isSelected()){
+			txtLetterColumn.setText("");
+		}
+		else{
+			txtNumberColumn.setText("");
+		}
+		
+		return false;
+	}
+
+	boolean validation(){
+		String ERROR_NUMBERS = "This field must have only Numbers";
+		String ERROR_LETTER = "This field must have only Letters";
+		String NOT_ZERO = "Not less Zero Values";
+		try{
+			if(rbNumbers.isSelected()){
+				int numberColumn = Integer.valueOf(txtNumberColumn.getText());
+				if(numberColumn<=0){
+					return displayError(NOT_ZERO);
+				}
+			}
+			else{
+				String letterColumn = txtLetterColumn.getText();
+				Pattern p = Pattern.compile(".*[0-9].*");
+				if(p.matcher(letterColumn).find()){
+					return displayError(ERROR_LETTER);
+				}
+			}
+			
+			lblValidate.setForeground(Color.black);
+			lblValidate.setText("");
+			processText();
+			return true;
+		}
+		catch(NumberFormatException ex){
+			displayError(ERROR_NUMBERS);
+		}
+		processText();
+	}
+
+	void processText(){
+		Excel ex = new Excel();
+		
+		if(rbNumbers.isSelected()){
+			int column = Integer.valueOf(txtNumberColumn.getText());
+			txtLetterColumn.setText(ex.numberToLetter(column));
+		}
+		else{
+			String column = txtLetterColumn.getText();
+			txtNumberColumn.setText(ex.letterToNumber(column).toString());
+		}
+	}
+}
+
+showGui();

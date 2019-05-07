@@ -1,0 +1,768 @@
+/*******************************************
+/*      @author Richard Martínez 2010      *
+********************************************/
+
+/**
+* Get number of occurrences when replace
+* @param identify if is a directory
+* @return number of occurences replaced, if is directory return: "number occurences,number files"
+*/
+String _getNumReplaces(String numReplaces, boolean isDirectory){
+	if(!isDirectory){
+		return numReplaces.replaceAll("(\\w+ )(\\d+)(.*in )(\\d+)(.*)", "$2");
+	}
+
+	return numReplaces.replaceAll("(\\w+ )(\\d+)(.*in )(\\d+)(.*)", "$2,$4");
+}
+
+/**
+* Replace all phrases from directory
+* @param search - phrase to find
+* @param replace - phrase to replace
+* @param flags - params b to setBeanShellReplace, i to setIgnoreCase, r to setRegexp
+* @param directory - String from directory
+* @param filter - filter to apply the files
+* @param openFiles - flag to open files in jEdit without save, for edit later
+* @return numReplaces
+*/
+String replaceDirectory(search,replace,flags,directory,filter,openFiles){
+	View view = jEdit.getActiveView();
+	boolean ic =  SearchAndReplace.getIgnoreCase();
+	boolean re =  SearchAndReplace.getRegexp();
+	boolean ww = SearchAndReplace.getWholeWord();
+	boolean bs = SearchAndReplace.getBeanShellReplace();
+	String oldSearch = SearchAndReplace.getSearchString();
+
+	SearchAndReplace.setSearchString(search);
+	SearchAndReplace.setReplaceString(replace);
+	SearchAndReplace.setWholeWord(false);
+	SearchAndReplace.setBeanShellReplace(flags.indexOf('b') >= 0);
+	SearchAndReplace.setIgnoreCase(flags.indexOf('i') >= 0);
+	SearchAndReplace.setRegexp(flags.indexOf('r') >= 0);
+	if(flags.indexOf('r')>=0){
+		SearchAndReplace.setWholeWord(flags.indexOf('w') >= 0);
+	}
+	SearchAndReplace.setSearchFileSet(new DirectoryListSet(directory,filter,true));
+	SearchAndReplace.hyperSearch(view,false);
+	SearchAndReplace.replaceAll(view);
+	String statusBar = view.getStatus().getMessage();
+
+	SearchAndReplace.setIgnoreCase(ic);
+	SearchAndReplace.setRegexp(re);
+	SearchAndReplace.setWholeWord(ww);
+	SearchAndReplace.setBeanShellReplace(bs);
+	SearchAndReplace.setSearchString(oldSearch);
+
+	String[] matchFiles = SearchAndReplace.getSearchFileSet().getFiles(view);
+
+	if(!openFiles && statusBar.indexOf("Replaced 0") < 0){
+		for(int i=0; i<matchFiles.length; i++){
+			Buffer ldrBuff = jEdit.openFile(view,matchFiles[i]);
+			ldrBuff.save(view,null,true);
+			jEdit._closeBuffer(view,ldrBuff);
+		}
+	}
+
+	return _getNumReplaces(statusBar, true);
+}
+
+/**
+* Replace all phrases from buffer
+* @param search - phrase to find
+* @param replace - phrase to replace
+* @param flags - params b to setBeanShellReplace, i to setIgnoreCase, r to setRegexp
+* @return numReplaces
+*/
+int replaceBuffer(search,replace,flags){
+	View view = jEdit.getActiveView();
+	boolean isRunning = BeanShell.isScriptRunning();
+	if(isRunning){
+		BeanShell.runScript(view, jEdit.getSettingsDirectory() + File.separator + "startup" + File.separator + "startBeanShell.bsh",null,false);
+	}
+
+	boolean ic =  SearchAndReplace.getIgnoreCase();
+	boolean re =  SearchAndReplace.getRegexp();
+	boolean ww = SearchAndReplace.getWholeWord();
+	boolean bs = SearchAndReplace.getBeanShellReplace();
+	String oldSearch = SearchAndReplace.getSearchString();
+
+	SearchAndReplace.setSearchString(search);
+	SearchAndReplace.setReplaceString(replace);
+	SearchAndReplace.setBeanShellReplace(flags.indexOf('b') >= 0);
+	SearchAndReplace.setWholeWord(false);
+	SearchAndReplace.setIgnoreCase(flags.indexOf('i') >= 0);
+	SearchAndReplace.setRegexp(flags.indexOf('r') >= 0);
+	if(flags.indexOf('r')>=0){
+		SearchAndReplace.setWholeWord(flags.indexOf('w') >= 0);
+	}
+	SearchAndReplace.setSearchFileSet(new CurrentBufferSet());
+	SearchAndReplace.replaceAll(view);
+	SearchAndReplace.setIgnoreCase(ic);
+	SearchAndReplace.setRegexp(re);
+	SearchAndReplace.setWholeWord(ww);
+	SearchAndReplace.setBeanShellReplace(bs);
+	SearchAndReplace.setSearchString(oldSearch);
+
+	try{
+		return Integer.parseInt(_getNumReplaces(view.getStatus().getMessage(), false));
+	}
+	catch(Exception ex){
+		return 0;
+	}
+}
+
+/**
+* Replace all phrases from selection
+* @param search - phrase to find
+* @param replace - phrase to replace
+* @param flags - params b to setBeanShellReplace, i to setIgnoreCase, r to setRegexp
+* @return numReplaces
+*/
+int replaceSelection(search,replace,flags){
+	View view = jEdit.getActiveView();
+
+	boolean isRunning = BeanShell.isScriptRunning();
+	if(isRunning){
+		BeanShell.runScript(view, jEdit.getSettingsDirectory() + File.separator + "startup" + File.separator + "startBeanShell.bsh",null,false);
+	}
+
+	BeanShell.runScript(view, jEdit.getSettingsDirectory() + File.separator + "startup" + File.separator + "startBeanShell.bsh",null,false);
+	boolean ic =  SearchAndReplace.getIgnoreCase();
+	boolean re =  SearchAndReplace.getRegexp();
+	boolean ww = SearchAndReplace.getWholeWord();
+	boolean bs = SearchAndReplace.getBeanShellReplace();
+	String oldSearch = SearchAndReplace.getSearchString();
+
+	SearchAndReplace.setSearchString(search);
+	SearchAndReplace.setReplaceString(replace);
+	SearchAndReplace.setBeanShellReplace(flags.indexOf('b') >= 0);
+	SearchAndReplace.setWholeWord(false);
+	SearchAndReplace.setIgnoreCase(flags.indexOf('i') >= 0);
+	SearchAndReplace.setRegexp(flags.indexOf('r') >= 0);
+	SearchAndReplace.replace(view);
+	if(flags.indexOf('r')>=0){
+		SearchAndReplace.setWholeWord(flags.indexOf('w') >= 0);
+	}
+
+	SearchAndReplace.setIgnoreCase(ic);
+	SearchAndReplace.setRegexp(re);
+	SearchAndReplace.setWholeWord(ww);
+	SearchAndReplace.setBeanShellReplace(bs);
+	SearchAndReplace.setSearchString(oldSearch);
+
+	try{
+		return Integer.parseInt(_getNumReplaces(view.getStatus().getMessage(), false));
+	}
+	catch(Exception ex){
+		return 0;
+	}
+}
+
+/**
+* Replace all phrases from selection
+* @param search - phrase to find
+* @param flags - params w to setAutoWrapAround, v to setReverseSearch, i to setIgnoreCase, r to setRegexp
+* @return true if expression found
+*/
+boolean findBuffer(search,flags){
+	boolean ic =  SearchAndReplace.getIgnoreCase();
+	boolean re =  SearchAndReplace.getRegexp();
+	boolean ww = SearchAndReplace.getWholeWord();
+	boolean bs = SearchAndReplace.getBeanShellReplace();
+	boolean aw = SearchAndReplace.getAutoWrapAround();
+	String oldSearch = SearchAndReplace.getSearchString();
+
+	if(flags.indexOf('a') >= 0){
+		jEdit.getActiveView().getTextArea().goToBufferStart(false);
+	}
+
+	SearchAndReplace.setSearchString(search);
+	SearchAndReplace.setAutoWrapAround(flags.indexOf('a') >= 0);
+	SearchAndReplace.setReverseSearch(flags.indexOf('v') >= 0);
+	SearchAndReplace.setIgnoreCase(flags.indexOf('i') >= 0);
+	SearchAndReplace.setRegexp(flags.indexOf('r') >= 0);
+	SearchAndReplace.setSearchFileSet(new CurrentBufferSet());
+	boolean result = SearchAndReplace.find(jEdit.getActiveView());
+
+	SearchAndReplace.setAutoWrapAround(aw);
+	SearchAndReplace.setSearchString(oldSearch);
+	SearchAndReplace.setIgnoreCase(ic);
+	SearchAndReplace.setRegexp(re);
+	SearchAndReplace.setWholeWord(ww);
+	SearchAndReplace.setBeanShellReplace(bs);
+	return result;
+}
+
+JEditBuffer openTempBuffer(){
+	private final View view = jEdit.getActiveView();
+	private final TextArea textArea = view.getTextArea();
+	private final EditPane editPane = view.getEditPane();
+
+	String selectedText = textArea.getSelectedText() == null ? "" : textArea.getSelectedText();
+	//En el caso que no haya seleccionado nada tomará todo el buffer
+	if(selectedText.trim().equals("")){
+		textArea.selectAll();
+		selectedText = textArea.getSelectedText();
+	}
+	Buffer bfTmp = new BufferSetManager().createUntitledBuffer();
+	bfTmp.insert(0, selectedText);
+	editPane.setBuffer(bfTmp);
+
+	return bfTmp;
+}
+
+void closeTempBuffer(JEditBuffer bfTmp){
+	private final View view = jEdit.getActiveView();
+	private final TextArea textArea = view.getTextArea();
+
+	textArea.selectAll();
+	selectedText = textArea.getSelectedText();
+	jEdit._closeBuffer(view,bfTmp);
+	Registers.setRegister('$', selectedText);
+	textArea.setSelectedText(selectedText);
+}
+
+String iniSelectedTextMandatory(){
+	String t = jEdit.getActiveView().getTextArea().getSelectedText();
+
+	if(checkMultiline && (t == null || t.trim().equals(""))){
+		Macros.message(jEdit.getActiveView(), "Must select valid text");
+		return "";
+	}
+
+	return t;
+}
+
+String iniSelectedText(){
+	private final TextArea ta = jEdit.getActiveView().getTextArea();
+	String t = ta.getSelectedText();
+
+	if(t=="" || t==null){
+		ta.selectAll();
+		t=ta.getSelectedText();
+	}
+
+	return t;
+}
+
+void endSelectedText(String t){
+	jEdit.getActiveView().getTextArea().setSelectedText(t);
+	Registers.setRegister('$', t);
+}
+
+boolean isMethodInvoker(String methodName){
+	StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+	//DEBUG:
+	//for(int i=0; i<stackTrace.length; i++) print("...methodName:" + methodName + ", " + stackTrace[i].getMethodName());
+	return Arrays.toString(stackTrace).indexOf(methodName) >= 0;
+}
+
+class JeditSql{
+	final static String ROUND_BRACKET_LEFT  = "___";
+	final static String ROUND_BRACKET_RIGHT = "_____";
+	final static String COMA                = "__";
+	final static String SHARP               = "____";
+	final static String SPACE               = "______";
+
+	final static String TRIM = "^[ \\t]+|[ \\t]+$";
+	final static String TRIM_COMA = "[ \\t]*,[ \\t]*";
+
+	final static String REGEXP_SQL_OBJECT = "(\\w+\\.){0,}+\\w+";
+	final static String REGEXP_SQL_FUNC_VALUES = "\\w+\\(([' \\t]*[\\w/]+[' \\t,.]*)+\\)";
+	final static String REGEXP_SQL_QUOTES_VALUES = "'([ \\t,]*\\w+)+'";
+	final static String REGEXP_SQL_VALUES = "(" + REGEXP_SQL_FUNC_VALUES + "|@{0,1}\\w+|" + REGEXP_SQL_QUOTES_VALUES + ")";
+	final static String REGEXP_SQL_SPECIAL_VALUES = "(" + REGEXP_SQL_FUNC_VALUES + "|@\\w+|\\d+|" + REGEXP_SQL_QUOTES_VALUES + ")";
+	final static String REGEXP_SQL_ALIAS = "(\\w+ )((AS ){0,1}\\w+)";
+	final static String REGEXP_SQL_RESERVED = "\\b(insert|into|values|update|set|as|not|like|in|inner|right|left|join|on|select|distinct|convert|case|sum|count|max|min|datetime|smallint|int|varchar|dateadd|isnull|null|from|where|and|or|with|nolock|union|group by|order by|having|desc|cast)\\b";
+	final static String REGEXP_SQL_COMMENT = "[ \\t]*--.*|/\\*([\\n\\t ]*([#\\w áéíóú]+\\n)+[\\n\\t ]*)+\\*/";
+	final static String REGEXP_SQL_DOUBLE_SPACES = "[ ]{2,}";
+	final static String REGEXP_SQL_RESERVED_LINE = "\\b(SET|FROM|WHERE|AND|OR|ORDER|INNER|RIGHT|LEFT)\\b";
+	final static String REGEXP_SQL_LAST_SEMICOLON = "[\\t ]*;+[\\t ]*$(\\n)*\\z";
+	final static String REGEXP_SQL_LAST_ROUND_BRACKET = "\\)" + TRIM_DOWN;
+	final static String REGEXP_SQL_FUNCTION = REGEXP_SQL_OBJECT + "[ \\t]*\\([ \\t]*[ :\\d\\w',/-]+\\)";
+	final static String REGEXP_SQL_RETURN_CARRIAGE = "[ \\t]*(WHERE|AND)[ \\t]*";
+	final static String REGEXP_SQL_RESERVED_VALUES = "\\b(SYSDATE)\\b";
+	final static String REGEXP_SQL_SET = "[ \\t]*SET[ \\t]*";
+	final static String REGEXP_SQL_NUMBER = "\\d,\\d";
+
+	private final View view = jEdit.getActiveView();
+	private final TextArea textArea = view.getTextArea();
+	private final EditPane editPane = view.getEditPane();
+
+	/**
+	* Beauty format query
+	* @param String opcs: u: set upper case reserved words, l: set WITH(NOLOCK) when query is SELECT, i: Indent query, f:if this function invoked from beauty Query Macro
+	* @return String - return a message
+	*/
+	void beautyQuery(String opcs){
+		String selectedText = textArea.getSelectedText();
+
+		textArea.selectAll();
+		textArea.joinLines();
+		replaceBuffer(REGEXP_SQL_RESERVED_LINE, "\\n$1", "ir");
+		replaceBuffer("(\\d+)(,)(\\d+)", "$1.$3", "r");
+		replaceBuffer("([^\\(])('[ \\t]*)(\\d{2}/\\d{2}/\\d{4})('[ \\t]*)", "TO_DATE('$3', 'dd/MM/yyyy')", "r");
+		replaceBuffer("([^\\(])('[ \\t]*)(\\d{4}/\\d{2}/\\d{2})('[ \\t]*)", "TO_DATE('$3', 'yyyy/MM/dd')", "r");
+
+		// Pongo las palabras reservadas en mayúsculas
+		if(opcs.indexOf('u') >= 0){
+			replaceBuffer(REGEXP_SQL_RESERVED, "_1.toUpperCase()", "br");
+			selectedText = textArea.getText();
+
+			if(opcs.equals("u")){
+				return;
+			}
+		}
+
+		if(selectedText.toUpperCase().indexOf("FROM") >= 0 && selectedText.toUpperCase().indexOf("INSERT") >= 0){
+			queryType = "INSERT SELECT";
+			selectedText = selectedText.replaceAll("(?i)(.*\n)+FROM", "\nFROM");
+		}
+		//En el caso de query SELECT Optimizo para que quede sólo con el segmento del FROM y no se demore al verificar la síntaxis
+		else if(selectedText.toUpperCase().indexOf("FROM") >= 0){
+			queryType = "SELECT";
+			selectedText = selectedText.replaceAll("(?i)(.*\n)+FROM", "\nFROM");
+		}
+		else if(selectedText.toUpperCase().indexOf("INSERT") >= 0){
+			queryType = "INSERT";
+		}
+		else if(selectedText.toUpperCase().indexOf("UPDATE") >= 0){
+			queryType = "UPDATE";
+		}
+
+		if(queryType.equals("UPDATE")){
+			replaceBuffer(",[ \\t]*" + REGEXP_SQL_OBJECT + "[ \\t]*=[ \\t]*" + REGEXP_SQL_VALUES, "\\n\\t$0", "ir");
+		}
+		else{
+			if(hasSyntaxError(queryType)){
+				return;
+			}
+
+			replaceBuffer("[ \\t]+", " ", "r");
+			replaceBuffer("(\\w+)([ \\t]+)(\\()", "$1(", "r");
+			replaceBuffer("(\\()([ \\t])|([ \\t])(\\))", "$1$4", "r");
+
+			// formateo correctamente el query en el caso que esté en una sola línea
+			if(!queryType.equals("CSV")){
+				if(opcs.indexOf('i') >= 0){
+					replaceBuffer(REGEXP_SQL_RESERVED_LINE, "\\n$1", "ir");
+				}
+				replaceBuffer("\\[|\\]", "", "r");
+
+				//quita todos los comentarios y tabulador
+				replaceBuffer(REGEXP_SQL_COMMENT + "|\\t", "", "ir");
+
+				// quita los espacios al principio y al final
+				replaceBuffer(TRIM_UP, "", "r");
+				replaceBuffer(TRIM_DOWN, "", "r");
+
+				//modifica las tablas temporales, para recuperarlas después
+				replaceBuffer("#", SHARP, "");
+				if(queryType.equals("INSERT")){
+					replaceBuffer("(\\bINSERT\\b \\bINTO\\b " + REGEXP_SQL_OBJECT + ")(\\()", "$1\\n$3", "ir");
+					replaceBuffer("\\bVALUES\\b", "\\n$0", "ir");
+				}
+				else{
+					if(queryType.equals("SELECT")){
+						textArea.goToNextCharacter(false);
+						textArea.goToEndOfWhiteSpace(true);
+					}
+					formatSpecialValues(true, true);
+				}
+				if(queryType.equals("SELECT")){
+					textArea.goToBufferStart(false);
+					findBuffer("\\bFROM\\b", "ir");
+					textArea.goToBufferStart(true);
+					replaceSelection("\\t", ", ", "r");
+					replaceSelection("^", "\\t, ", "r");
+					replaceSelection("\\t, SELECT", "SELECT", "ir");
+
+					replaceBuffer("(\\bWHERE\\b.*)((.*\\n)+)(.*\\bORDER\\b)", "_1 + _2.replaceAll(\"(?m)^\",\"\\t\") + _4", "bir");
+
+					if(opcs.indexOf('l') >= 0){
+						replaceBuffer("(with)*[ \\(]*nolock[ \\)]*", "", "ir");
+						replaceBuffer("\\b(from|join)\\b[ \\t\\n]*(\\w+\\.*)+[ \\t]*(\\bas\\b[ \\t]+)*\\w+", "$0 WITH(NOLOCK) ", "ir");
+					}
+					replaceBuffer("\\bFROM\\b.*", "_0.replaceAll(\",\", \"\\n\\t,\")", "bir");
+				}
+				if(queryType.equals("INSERT SELECT")){
+					replaceBuffer("(\\)[ \\t])(SELECT)", ")\\n$2", "ir");
+					findBuffer("(SELECT.*\\n)(^.*\\n)+(FROM)", "air");
+					replaceSelection("^", ", ", "r");
+					replaceSelection("(, )(" + REGEXP_SQL_RESERVED + ")", "$2", "ir");
+				}
+
+				//recupera las tablas temporales
+				replaceBuffer(SHARP, "#", "r");
+
+				replaceBuffer(BLANK_LINE, "", "r");
+				replaceBuffer(REGEXP_SQL_DOUBLE_SPACES, " ", "ir");
+			}
+		}
+
+		replaceBuffer("([ \\t]+$|^" + TRIM_COMA + "\\n)", "", "r");
+		replaceBuffer("(\\w)( )(, \\w)", "$1$3", "r");
+		replaceBuffer("\\b(AND|OR)\\b", "\\t$0", "ir");
+		replaceBuffer("[ \\t]*;[ \\t]*", ";", "r");
+	}
+
+	/**
+	* Verify if query haf syntaxError
+	* @return boolean - if true has Syntax error
+	*/
+	boolean hasSyntaxError(String queryType){
+		String msgSyntaxError = "Syntax Error in %s Query";
+		boolean syntaxError = false;
+		int iniLine = 0;
+
+		if(queryType.indexOf("CSV") >=0 && !findBuffer("\\t", "ar")){
+			Macros.message(view, "Text must have Tabs");
+			return true;
+		}
+
+		if(queryType.equals("CSV_SELECT")){
+			if(findBuffer("\\A" + REGEXP_SQL_OBJECT + "[ \\t]*$", "ar")){
+				Macros.message(view, "Please Quit the table name, only must have data");
+				return true;
+			}
+			iniLine = 1;
+		}
+		else if(queryType.equals("CSV_")){
+			iniLine = 2;
+		}
+		if(iniLine > 0 && !new Excel().isMatchColumns(iniLine)){
+			Macros.message(view, "The number columns is not Match");
+			return true;
+		}
+		if(queryType.equals("CSV_") && !findBuffer("\\A" + REGEXP_SQL_OBJECT + "[ \\t]*$", "ar")){
+			Macros.message(view, String.format(msgSyntaxError, new Object[] {"CSV"}) + ", \nMust have table Name in first line");
+			return true;
+		}
+
+		if(iniLine == 0){
+			textArea.selectAll();
+			textArea.joinLines();
+		}
+
+		textArea.goToBufferStart(false);
+		if(queryType.equals("SELECT") && !findBuffer("\\bSELECT\\b (DISTINCT){0,1}" + REGEXP_SQL_OBJECT + ".*\\bFROM\\b " + REGEXP_SQL_OBJECT, "air")
+			|| queryType.equals("INSERT") && !findBuffer("\\bINSERT\\b \\bINTO\\b " + REGEXP_SQL_OBJECT + "[ \t]*\\((" + REGEXP_SQL_OBJECT + "(, " + REGEXP_SQL_OBJECT + ")*)+\\) \\bVALUES\\b\\(\\p{Print}.*\\)", "air")
+			|| queryType.equals("UPDATE") && !findBuffer("\\bUPDATE\\b " + REGEXP_SQL_OBJECT + " \\bSET\\b " + REGEXP_SQL_OBJECT + " = " + REGEXP_SQL_SPECIAL_VALUES, "air")
+			|| queryType.equals("SP") && !findBuffer("\\A[\\n \\t]*\\((.*(\\n)*^[ \\t]*)*(\\n)*[\\t ]*values[\\t ]*\\((.*(\\n)*^[ \\t]*)*.*" + REGEXP_SQL_LAST_ROUND_BRACKET, "air")
+			){
+			bfTmp = editPane.getBuffer();
+			jEdit._closeBuffer(view,bfTmp);
+			Macros.message(view, String.format(msgSyntaxError, new Object[] {queryType}));
+			syntaxError = true;
+		}
+
+		return syntaxError;
+	}
+
+	/**
+	* Convert a query to another query
+	* @param String query1: first query query to convert
+	* @param String query2: final converted query
+	*/
+	void convertQuery(String query1, String query2){
+		String tableName = "";
+		String fowardQuery = "";
+		Excel excel = new Excel();
+		String conversion = query1 + "_" + query2;
+		int semiColon = replaceBuffer(REGEXP_SQL_LAST_SEMICOLON, "", "ar");
+
+		//format decimal
+		replaceBuffer(REGEXP_SQL_NUMBER, "_0.replaceAll(\",\", \".\")", "br");
+
+		//quita todos los posibles comentarios que puedan quedar
+		replaceBuffer(REGEXP_SQL_COMMENT, "", "ir");
+		if(!query1.equals("CSV")){
+			textArea.selectAll();
+			textArea.joinLines();
+		}
+
+		if(conversion.equals("SELECT_UPDATE") || conversion.equals("UPDATE_SELECT")){
+			replaceBuffer("ORDER[ \\t]BY.*(\\n.*)*", "", "ir");
+
+			if(findBuffer("WHERE.*", "air")){
+				fowardQuery = textArea.getSelectedText();
+				textArea.delete();
+			}
+		}
+
+		switch(query1){
+			case "INSERT":
+				tableName = getNameTable("\\bINSERT\\b[ \\t]\\bINTO\\b " + REGEXP_SQL_OBJECT, "^\\w+ \\w+ ");
+
+				if(!query2.equals("SELECT")){
+					replaceBuffer("\\)[ \\t]*\\bVALUES\\b[ \\t]*\\(", "\\n", "ir");
+					replaceBuffer(TRIM_UP + "\\(", "", "r");
+					replaceBuffer(TRIM_COMA, ",", "r");
+					replaceBuffer(REGEXP_SQL_LAST_ROUND_BRACKET, "", "r");
+
+					formatSpecialValues(true, false);
+					excel.transposeMatrix();
+					formatSpecialValues(false, true);
+					replaceBuffer("^", ", ", "r");
+				}
+			break;
+			case "SELECT":
+				replaceBuffer("^[ \\t]*SELECT[ \\t]*", "", "ir");
+				tableName = getNameTable("\\bFROM\\b[ \\t]+" + REGEXP_SQL_OBJECT, "^\\w+[ \\t]+");
+				formatSpecialValues(true, true);
+				replaceBuffer("^", ", ", "r");
+				break;
+			case "UPDATE":
+				tableName = getNameTable("UPDATE " + REGEXP_SQL_OBJECT, "^\\w+ ");
+
+				findBuffer("\\bWHERE\\b.*", "air");
+				Registers.cut(textArea,'$');
+
+				replaceBuffer("=", ",", "r");
+				formatSpecialValues(true, true);
+			break;
+			case "CSV":
+				replaceBuffer("\"", "", "");
+				if(!query2.equals("SELECT")){
+					tableName = getNameTable("\\A" + REGEXP_SQL_OBJECT + "\\n", "");
+				}
+				//remove spaces like trim
+				replaceBuffer(TRIM_UP, "", "r");
+				replaceBuffer(TRIM_DOWN, "", "r");
+			break;
+		}
+
+		switch(conversion){
+			case "UPDATE_SELECT":
+				replaceBuffer(REGEXP_SQL_SET, "", "ir");
+				replaceBuffer("(^|\\t)", ", ", "r");
+
+				replaceBuffer(REGEXP_SQL_RETURN_CARRIAGE, "\\n, ", "ir");
+				replaceBuffer(TRIM, "", "r");
+				TextToolsSorting.deleteDuplicates(view, textArea);
+
+				replaceBuffer("\\A, ", "SELECT ", "r");
+				replaceBuffer("\\z", "\\nFROM " + tableName, "r");
+			break;
+			case "CSV_SELECT":
+				int numLines = view.getTextArea().getText().split("\n").length;
+				boolean hasTwoCols = findBuffer("\\A.*\\t", "ar");
+
+				// encloses quote for blank spaces
+				replaceBuffer("^\\t", "''\\t", "ir");
+				replaceBuffer("\\t$", "\\t''", "ir");
+				replaceBuffer("\\t[ ]*\\t", "\\t''\\t", "ir");
+
+				// encloses quote for values except functions
+				textArea.goToBufferStart(false);
+				textArea.goToEndOfWhiteSpace(false);
+				textArea.goToBufferEnd(true);
+				replaceSelection("\\p{Print}+", "'$0'", "r");
+				replaceSelection("'{2,}", "'", "r");
+				replaceBuffer("(')(" + REGEXP_SQL_FUNC_VALUES  + ")(')", "$2", "r");
+
+				//format two first lines for "value AS alias"
+				if(numLines == 2){
+					textArea.goToBufferEnd(false);
+					textArea.insertEnterAndIndent();
+				}
+				textArea.goToBufferStart(false);
+				TextToolsPlugin.transposeLines(textArea);
+				textArea.goToBufferEnd(true);
+				String tmpQuery = textArea.getSelectedText();
+				textArea.delete();
+				if(hasTwoCols){
+					excel.transposeMatrix();
+				}
+				else{
+					replaceBuffer("\\n", "\\t", "r");
+				}
+
+				// format SELECT
+				replaceBuffer("(\\p{Print}+)(\\t)(\\p{Print}+)", "$1 $3", "r");
+				replaceBuffer("\\n", ", ", "r");
+				replaceBuffer("\\A", "SELECT ", "r");
+				tmpQuery = tmpQuery.replaceAll("\t", ", ");
+				tmpQuery = tmpQuery.replaceAll("^\n", "");
+				tmpQuery = tmpQuery.replaceAll("(?m)^", "UNION SELECT ");
+				textArea.goToBufferEnd(false);
+				textArea.insertEnterAndIndent();
+				textArea.setSelectedText(tmpQuery);
+				replaceBuffer("$", " FROM DUAL", "r");
+
+				replaceBuffer("'+[ \\t]*(" + REGEXP_SQL_FUNC_VALUES + "|" + REGEXP_SQL_RESERVED_VALUES + ")+[ \\t]*'", "$1", "r");
+				return;
+			break;
+		}
+
+		switch(query2){
+			case "INSERT":
+				excel.transposeMatrix();
+				replaceBuffer("\\t", ", ", "r");
+				textArea.goToBufferStart(false);
+				textArea.goToEndOfWhiteSpace(true);
+				replaceSelection(".*", "INSERT INTO " + tableName + "($0)", "r");
+				textArea.goToBufferEnd(false);
+				textArea.goToStartOfWhiteSpace(true);
+				replaceSelection(".*", "VALUES($0)", "r");
+			break;
+			case "UPDATE":
+				replaceBuffer("\\t", " = ", "r");
+				replaceBuffer("\\A, ", "UPDATE " + tableName + "\\nSET ", "r");
+			break;
+			case "CSV":
+				replaceBuffer(REGEXP_SQL_SET, "", "ir");
+				replaceBuffer("\\A", "Structure table: " + tableName + "\nFIELD	VALUE\n", "r");
+				replaceBuffer(BLANK_LINE, "", "r");
+				replaceBuffer("^" + TRIM_COMA, "", "r");
+				return;
+			break;
+		}
+
+		if(!fowardQuery.equals("")){
+			textArea.goToBufferEnd(false);
+			textArea.insertEnterAndIndent();
+			textArea.setSelectedText(fowardQuery);
+		}
+		// Vuelve a poner el punto y coma al final de la sentencia en el caso de que haya exisitido
+		if(!query2.equals("CSV") && semiColon > 0){
+			replaceBuffer("\\z", ";", "r");
+		}
+	}
+
+	/**
+	* Return name table from query
+	* @param String regExQuery: Regular Expression to find query
+	* @param String deleteRegExpToReplace: Regular Expression to delete for query
+	* @return String - name for table
+	*/
+	String getNameTable(String regExQuery, String deleteRegExpToReplace){
+		findBuffer(regExQuery, "air");
+		String tableName = textArea.getSelectedText().replaceAll(deleteRegExpToReplace, "");
+		textArea.delete();
+		return tableName;
+	}
+
+	/**
+	* to format the special assigns
+	* @param boolean ini: si quiere que se formatee la primera asignación
+	* @param boolean end: si quiere que se formatee la segunda asignación
+	*/
+	void formatSpecialValues(boolean ini, boolean end){
+		replaceBuffer("()", "( )", "");
+
+		if(ini){
+			replaceBuffer(REGEXP_SQL_FUNCTION, "_0.replaceAll(\"\\\\(\", \"" + ROUND_BRACKET_LEFT + "\")", "bir");
+			replaceBuffer(REGEXP_SQL_FUNCTION.replace("\\(", ROUND_BRACKET_LEFT), "_0.replaceAll(\",\", \"" + COMA + "\")", "bir");
+			replaceBuffer(REGEXP_SQL_FUNCTION.replace("\\(", ROUND_BRACKET_LEFT), "_0.replaceAll(\"\\\\)\", \"" + ROUND_BRACKET_RIGHT + "\")", "bir");
+
+			if(findBuffer("SELECT ", "a")){
+				textArea.goToNextCharacter(false);
+				textArea.goToEndOfWhiteSpace(true);
+				replaceSelection(REGEXP_SQL_ALIAS, "$1", "ir");
+				replaceSelection(TRIM_COMA, "\\t", "r");
+			}
+			else{
+				replaceBuffer(TRIM_COMA, "\\t", "r");
+			}
+			replaceBuffer("^[ \\t]+", "", "r");
+		}
+		if(end){
+			//Se realiza la asignación directa de los campos para valores como = 1 o = 'uno' o = FUNCION(PARAM1, 'PARAM2')
+			replaceBuffer("\\t", "\\n", "r");
+			replaceBuffer("(" + REGEXP_SQL_OBJECT + ")(\\n.*).*", "_0.replaceAll(\"\\n\", \"	\")", "bir");
+
+			replaceBuffer(ROUND_BRACKET_RIGHT, ")", "");
+			replaceBuffer(ROUND_BRACKET_LEFT, "(", "");
+			replaceBuffer(COMA, ",", "");
+		}
+
+		replaceBuffer("( )", "()", "");
+	}
+}
+
+
+class Excel{
+	private final View view = jEdit.getActiveView();
+	private final TextArea textArea = view.getTextArea();
+
+	boolean isMatchColumns(int iniLine){
+		boolean match = true;
+		int maxLines = textArea.getLineCount();
+		int numTabsPrev = 0;
+		int numTabsCurrent = 0;
+
+		textArea.setCaretPosition(textArea.getLineStartOffset(iniLine-1));
+		for(int i=0; i<maxLines; i++){
+			textArea.selectLine();
+			numTabsPrev = replaceSelection("(\\p{Print})(\\t)(\\p{Print})", "$1$2$3", "ir");
+			if(i > 0 && numTabsCurrent != numTabsPrev){
+				match = false;
+				break;
+			}
+			numTabsCurrent = numTabsPrev;
+			textArea.goToNextLine(false);
+		}
+		//TODO:QUITAR ESTO SI POR UN BUEN MOMENTO FUNCIONA
+		//textArea.goToBufferStart(false);
+		return match;
+	}
+
+	int letterToNumber(String column){
+		int retVal = 0;
+		String col = column.toUpperCase();
+		for(int iChar = col.length() - 1; iChar >= 0; iChar--){
+			char colPiece = col.charAt(iChar);
+			int colNum = colPiece - 64;
+			retVal = retVal + colNum * (int)Math.pow(26, col.length() - (iChar + 1));
+		}
+		return retVal;
+	}
+
+	String numberToLetter(int column){
+		String columnString = "";
+		float columnNumber = column;
+		while(columnNumber > 0){
+			float currentLetterNumber = (columnNumber - 1) % 26;
+			char currentLetter = (char)(currentLetterNumber + 65);
+			columnString = currentLetter + columnString;
+			columnNumber = (columnNumber - (currentLetterNumber + 1)) / 26;
+		}
+		return columnString;
+	}
+
+	String increaseColumn(String currentLetter, int diffColumn){
+		int numLetter = letterToNumber(currentLetter);
+		String newColumn = numberToLetter(numLetter + diffColumn);
+		return newColumn;
+	}
+
+	boolean transposeMatrix(){
+		if(textArea.getSelectedText() == null){
+			textArea.selectAll();
+		}
+
+		String text = textArea.getSelectedText();
+		if(!java.util.regex.Pattern.compile("\\A(\\p{Print})+\\t").matcher(text).find()){
+			Macros.message(view, "The Selection or Text must Separated by TABS");
+			return false;
+		}
+
+		String transposeText = "";
+		String[] lines = text.replaceAll("(?m)\\t$", "\t\"\"").replaceAll("(?m)(^[ \\t]*|[ ]*$)", "").split("\\r?\\n");
+		String[][] matrix = new String[lines.length][];
+		for(int l = 0; l < lines.length; l++){
+			matrix[l] = lines[l].split("\\t");
+		}
+
+		for(int c=0; c<matrix[0].length; c++){
+			for(int r=0; r<matrix.length; r++){
+				transposeText += matrix[r][c] + "\t";
+			}
+			transposeText += "\n";
+		}
+
+		textArea.setSelectedText(transposeText.replaceAll("(?m)(\\n$|[ \\t]*$)", ""));
+		return true;
+	}
+}

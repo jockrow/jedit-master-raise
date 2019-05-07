@@ -1,0 +1,15 @@
+/**********************************************
+*     @author Richard Martínez 2019/03/29     *
+***********************************************/
+/**
+ * Method convertToSqlLite()
+ * Convert any Query to SqlLite
+ */
+public convertToSqlLite(){
+	replaceBuffer("(\"| ENABLE| BYTE)", "", "r");
+	replaceBuffer("(\\w+\\.)(\\w+)", "$2", "r");
+	
+	return;
+}
+
+convertToSqlLite();

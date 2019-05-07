@@ -1,0 +1,109 @@
+/**********************************************
+*     @author Richard Martínez 2019/03/08     *
+***********************************************/
+/**
+ * Get RGB or Hexadecimal color from pixel
+ *
+ * USE:
+ *	1. Press UP or DOWN to toggle RGB/Hexadecimal values
+ *	2. Press ENTER to copy the current value to the clipboard and stop.
+ *	3. Press ESCAPE to stop without copying.
+ */
+void showGui(){
+	Color lastColor = null;
+	String mode = "HEX";
+	Robot robbie = new Robot();
+	JTextArea lblTip = new JTextArea();
+	JTextField b = new JTextField("", 14);
+	JWindow win = new JWindow(view);
+	JWindow winTip = new JWindow(view);
+
+	lblTip.setText("Get Screen Color USE:\n1.Press UP or DOWN to toggle RGB/Hexadecimal values \n2.Press ENTER to copy the current value to the clipboard and stop \n3.Press ESCAPE to stop without copying");
+	lblTip.setBackground(new Color(0xFFFFCC));
+
+	b.setHorizontalAlignment(JTextField.CENTER);
+	b.setEditable(false);
+
+	win.add(b, BorderLayout.WEST);
+	win.setAlwaysOnTop(true);
+	win.pack();
+
+	winTip.setLocation(view.width-522, view.height-137);
+	winTip.add(lblTip);
+	winTip.setAlwaysOnTop(true);
+	winTip.pack();
+	winTip.setVisible(true);
+
+	ActionListener al = new ActionListener() {
+		public void actionPerformed(ActionEvent e){
+			if(!win.isVisible()) win.setVisible(true);
+			Point p = MouseInfo.getPointerInfo().getLocation();
+			win.setLocation(p.x+4, p.y+22);
+			Color c = robbie.getPixelColor(p.x, p.y);
+			if(!c.equals(lastColor)){
+				if(mode.equals("HEX")){
+					b.setText(toHexString(c));
+				}
+				else{
+					b.setText(c.getRed() + ", " + c.getGreen() + ", " + c.getBlue());
+				}
+				b.setBackground(new Color(c.getRed(), c.getGreen(), c.getBlue()));
+				b.setForeground(new Color(255 - c.getRed(), 255 - c.getGreen(), 255 - c.getBlue()));
+			}
+			lastColor = c;
+		}
+	};
+
+	javax.swing.Timer timerTip = new javax.swing.Timer (8000, new ActionListener (){
+		public void actionPerformed(ActionEvent e){
+			winTip.dispose();
+		}
+	});
+	timerTip.start();
+	javax.swing.Timer timer = new javax.swing.Timer(100, al);
+
+	public void keyReleased(KeyEvent e){
+		switch(e.getKeyCode()){
+			case KeyEvent.VK_ESCAPE:
+				timer.stop();
+				win.dispose();
+				winTip.dispose();
+			break;
+			case KeyEvent.VK_ENTER:
+				timer.stop();
+				Registers.setRegister('$', b.getText());
+				win.setVisible(false);
+				winTip.dispose();
+			break;
+			case KeyEvent.VK_UP: case KeyEvent.VK_DOWN:
+				mode = mode.equals("HEX") ? "RGB" : "HEX";
+				lastColor = null;
+			break;
+		}
+	}
+
+	public void keyPressed(KeyEvent e){}
+	public void keyTyped(KeyEvent e){}
+	public void focusGained(FocusEvent e){}
+	public void focusLost(FocusEvent e){
+		timer.stop();
+		win.dispose();
+	}
+
+	b.addFocusListener(this);
+	b.addKeyListener(this);
+	timer.start();
+	b.requestFocus();
+}
+
+String toHexString(Color c){
+	StringBuffer sb = new StringBuffer("#");
+	int[] rgb = new int[] { c.getRed(), c.getGreen(), c.getBlue() };
+	for(int j=0; j < rgb.length; j++){
+		if(rgb[j] <= 15) sb.append("0");
+		sb.append(Integer.toHexString(rgb[j]).toUpperCase());
+	}
+	return sb.toString();
+}
+
+showGui();

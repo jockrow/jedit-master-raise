@@ -1,0 +1,65 @@
+/**********************************************
+*     @author Richard Martínez 2019/02/25     *
+***********************************************/
+/**
+ * Show table Html Entities Table
+ */
+import javax.swing.table.*;
+
+void showGui(){
+	int i = 0;
+	int[]arr = new int[3];
+	JTable table = new JTable();
+
+	table.setModel(new DefaultTableModel(ARR_CHARS, new String[]{"Result", "Description", "Entity Name", "Entity Number"}));
+	table.setRowSorter(new TableRowSorter(table.getModel()));
+	table.setDefaultEditor(Object.class, null);
+	table.getColumnModel().getColumn(0).setPreferredWidth(25);
+	table.getColumnModel().getColumn(1).setPreferredWidth(150);
+	table.addKeyListener(this);
+
+	SwingUtilities.invokeLater(new Runnable(){
+		public void run(){
+			table.requestFocus();
+		}
+	});
+
+	JScrollPane tablePane = new JScrollPane(table);
+	tablePane.setPreferredSize(new Dimension(550, 300));
+
+	void keyPressed(KeyEvent e){
+		JEditTextArea ta = jEdit.getActiveView().getTextArea();
+		arr[i]=e.getKeyCode();
+		i++;
+		if(e.getKeyCode() == KeyEvent.VK_ESCAPE)
+		{
+			if(Macros.confirm(view, "Are you sure to close?", JOptionPane.YES_NO_OPTION)==0){
+				dialog.dispose();
+			}
+			else{
+				table.requestFocus();
+			}
+		}
+		else if (e.getKeyCode() == KeyEvent.VK_ENTER)
+		{
+			ta.setSelectedText(ARR_CHARS[table.getSelectedRow()][table.getSelectedColumn()]);
+			dialog.dispose();
+		}
+	}
+	void keyReleased(KeyEvent e) {
+		if(table.getSelectedRowCount() == 1 && (arr[0]==KeyEvent.VK_CONTROL && arr[1]==KeyEvent.VK_C || arr[0]==KeyEvent.VK_SHIFT && arr[1]==KeyEvent.VK_INSERT)){
+			Registers.setRegister('$', table.getValueAt(table.getSelectedRow() + table.getSelectedRowCount() - 1, table.getSelectedColumn() + table.getSelectedColumnCount() - 1));
+		}
+		i = 0;
+	}
+	void keyTyped(KeyEvent e){}
+
+	dialog = new JDialog(view, "Html Entities Table", false);
+	Container c = dialog.getContentPane();
+	c.add(tablePane, "North");
+	dialog.pack();
+	dialog.setLocationRelativeTo(view);
+	dialog.show();
+}
+
+showGui();

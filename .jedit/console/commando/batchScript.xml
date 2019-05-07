@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<!DOCTYPE COMMANDO SYSTEM "commando.dtd">
+<COMMANDO>
+	<UI>
+		<CAPTION LABEL="File Location">
+			<FILE_ENTRY LABEL="bat file" VARNAME="file"
+				EVAL="buffer.getPath()" />
+		</CAPTION>	
+	</UI>
+	<COMMANDS>
+		<COMMAND CONFIRM="FALSE" SHELL="System">
+			if(file.substring(file.length() - 3).toLowerCase().equals("bat")){
+				buf = new StringBuffer('"');
+				buf.append(file);
+				buf.append('"');
+				return buf.toString();
+			}
+			else{
+				Macros.message(view, "the extension mus be bat");
+			}
+		</COMMAND>
+	</COMMANDS>
+</COMMANDO>
+

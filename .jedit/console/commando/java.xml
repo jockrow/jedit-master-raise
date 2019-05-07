@@ -1,0 +1,81 @@
+<?xml version="1.0" ?>
+<!DOCTYPE COMMANDO SYSTEM "commando.dtd">
+<COMMANDO>
+	<UI>
+		<CAPTION LABEL="Application settings">
+			<ENTRY LABEL="Main class or JAR file" VARNAME="jar"
+				EVAL="console.ConsolePlugin.getClassName(buffer)" />
+			<ENTRY LABEL="Application parameters" VARNAME="args" />
+		</CAPTION>
+
+		<CAPTION LABEL="VM settings">
+			<PATH_ENTRY LABEL="Classpath" VARNAME="classpath" EVAL="getBufferClassPath(buffer);" />
+			<ENTRY LABEL="Initial heap size (Mb)" VARNAME="ms" DEFAULT="32" />
+			<ENTRY LABEL="Maximum heap size (Mb)" VARNAME="mx" DEFAULT="32" />
+			<ENTRY LABEL="Thread stack size (Kb)" VARNAME="ss" />
+			<ENTRY LABEL="Additional VM parameters" VARNAME="extra" />
+		</CAPTION>
+	</UI>
+
+	<COMMANDS>
+		<COMMAND SHELL="System">
+			buf = new StringBuffer();
+			buf.append("java");
+
+			buffer.setProperty("java.classpath", classpath);
+			if(!classpath.equals(""))
+			{
+				buf.append(" -classpath \"");
+				buf.append(classpath);
+				buf.append('"');
+			}
+
+			if(!ms.equals(""))
+			{
+				buf.append(" -ms");
+				buf.append(ms);
+				buf.append('m');
+			}
+
+			if(!mx.equals(""))
+			{
+				buf.append(" -mx");
+				buf.append(mx);
+				buf.append('m');
+			}
+
+			if(!ss.equals(""))
+			{
+				buf.append(" -ss");
+				buf.append(ss);
+				buf.append('k');
+			}
+
+			if(!extra.equals(""))
+			{
+				buf.append(' ');
+				buf.append(extra);
+			}
+
+			if(jar.endsWith(".jar"))
+			{
+				buf.append(" -jar \"");
+				buf.append(jar);
+				buf.append('"');
+			}
+			else
+			{
+				buf.append(' ');
+				buf.append(jar);
+			}
+
+			if(!args.equals(""))
+			{
+				buf.append(' ');
+				buf.append(args);
+			}
+
+			buf.toString();
+		</COMMAND>
+	</COMMANDS>
+</COMMANDO>

@@ -1,0 +1,45 @@
+<?xml version="1.0" ?>
+<!DOCTYPE COMMANDO SYSTEM "commando.dtd">
+<COMMANDO>
+	<UI>
+		 <CAPTION LABEL="WARNING: Only for slow jEdit." />
+	</UI>
+	<COMMANDS>
+		<COMMAND CONFIRM="FALSE" SHELL="System">
+			/* <![CDATA[ */
+			import custom.files.jEditFile;
+
+			jEditFile jef = new jEditFile();
+			String[] rootFilesDelete = {"abbrevs", "printspec", "registers.xml", "textfilter.conf", "pluginMgr-Cached.xml.gz", "properties"};
+			String SEP = File.separator;
+			String JEDIT_SETTINGS = jEdit.getSettingsDirectory() + SEP;
+			String postClose = "\"" + jEdit.getJEditHome() + SEP + "jars" + SEP + "PostClose.jar\"";
+			
+			if(jEdit.getProperty("plugin-manager.installUser").equals("true")){
+				postClose = JEDIT_SETTINGS + "jars" + SEP + "PostClose.jar";
+			}
+
+			void clearDirectory(File directory){
+				files = directory.list();
+
+				for(String file : files){
+					jef.deleteFile(directory.getPath(), file);
+				}
+			}
+
+			for(String s: rootFilesDelete){
+				jef.deleteFile(JEDIT_SETTINGS, s);
+			}
+			for(int i=0; i<=10; i++){
+				jef.deleteFile(JEDIT_SETTINGS + "MyDoggyPlugin", "perspective-view" + i + ".xml");
+			}
+			clearDirectory(new File(JEDIT_SETTINGS + "settings-backup"));
+			jef.deleteFile(JEDIT_SETTINGS + "MyDoggyPlugin", "temp.xml");
+
+			Macros.message(view, "Cleared Cache \nplease restart jEdit \nLater recommend to choose - Docking - Load Docking Layout");
+			runCommandInConsole(view,"System", postClose);
+			jEdit.exit(view, true);
+			/* ]]> */
+		</COMMAND>
+	</COMMANDS>
+</COMMANDO>

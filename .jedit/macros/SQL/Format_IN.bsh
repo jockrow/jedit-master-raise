@@ -1,0 +1,27 @@
+/************************************************/
+/*      @author Richard Martínez 2016/09/20		*/
+/************************************************/
+/**
+ * Method formatIn()
+ * Format a list for where in(1,2,3)
+ * 	or in('one', 'two', '3')
+ */
+public void formatIn(){
+	JEditBuffer bfTmp = openTempBuffer();
+	TextToolsSorting.deleteDuplicates(view, textArea);
+	boolean isNotNumber = findBuffer("[\\p{Alpha}/\\*\\-\\+,\\(\\)\\\"#\\$&]", "air");
+
+	replaceBuffer(BLANK_LINE, "", "r");
+	replaceBuffer(BLANK_SPACE, "", "r");
+	replaceBuffer(".+", ", '$0'", "r");
+	replaceBuffer("\\A, ", "IN(", "r");
+	replaceBuffer("\\z", ")", "r");
+
+	if(!isNotNumber){
+		replaceBuffer("'", "", "");
+	}
+
+	closeTempBuffer(bfTmp);
+}
+
+formatIn();

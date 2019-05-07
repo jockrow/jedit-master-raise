@@ -1,0 +1,115 @@
+/************************************************/
+/*      @author Richard Martínez 2018/03/07		*/
+/************************************************/
+/**
+ * Method htmlNamedEntities()
+ * Replace all charecters like as accent for html Entities
+ */
+import javax.swing.border.*;
+
+String result = "";
+JCheckBox chkInvert = new JCheckBox("Inverse Conversion", false);
+JButton ok = new JButton("OK");
+
+String ENTITY_ACCENT = "&aacute; -> á";
+String ACCENT_ENTITY = "á -> &aacute;";
+
+void showGui(){
+	KeyListener ka = new KeyListener(){
+		void keyReleased(KeyEvent ke){
+			if (ke.getKeyCode() == KeyEvent.VK_ESCAPE){
+				dialog.dispose();
+			}
+		}
+
+		void keyPressed(KeyEvent ke){}
+		void keyTyped(KeyEvent ke){}
+	};
+
+	ActionListener al = new ActionListener(){
+		boolean actionPerformed(ActionEvent e) {
+			switch(e.getActionCommand()){
+				case "OK":
+					dialog.dispose();
+					setResult();
+					processText();
+				break;
+				case "Cancel":
+					dialog.dispose();
+				break;
+			}
+
+			return true;
+		}
+	};
+
+	dialog = new JDialog(view, "Convert Html Entities", true);
+	content = new JPanel(new BorderLayout());
+	content.setBorder(new EmptyBorder(12, 12, 12, 12));
+	dialog.setContentPane(content);
+	fieldPanel = new JPanel(new GridLayout(2, 2));
+
+	lblInvert = new JLabel(ACCENT_ENTITY);
+	chkInvert.addKeyListener(ka);
+	chkInvert.addActionListener(new ActionListener(){
+		boolean actionPerformed(ActionEvent e){
+			lblInvert.setText(lblInvert.getText().equals(ENTITY_ACCENT) ? ACCENT_ENTITY : ENTITY_ACCENT);
+			return true;
+		}
+	});
+
+	fieldPanel.add(chkInvert);
+	fieldPanel.add(lblInvert);
+	content.add(fieldPanel, "North");
+
+	buttonPanel = new JPanel();
+	buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
+	buttonPanel.setBorder(new EmptyBorder(12, 50, 0, 80));
+	cancel = new JButton("Cancel");
+	ok.setPreferredSize(cancel.getPreferredSize());
+	dialog.getRootPane().setDefaultButton(ok);
+	buttonPanel.add(ok);
+	buttonPanel.add(Box.createHorizontalStrut(6));
+	buttonPanel.add(cancel);
+	content.add(buttonPanel, "South");
+
+	ok.addActionListener(al);
+	cancel.addActionListener(al);
+
+	dialog.pack();
+	dialog.setLocationRelativeTo(view);
+	dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+	dialog.setVisible(true);
+}
+
+public void processText(){
+	if(textArea.getSelectedText() == null){
+		textArea.selectAll();
+	}
+	String t = textArea.getSelectedText();
+
+	if(chkInvert.isSelected()){
+		for(int i=0; i<ARR_CHARS.length; i++){
+			t = t.replaceAll(ARR_CHARS[i][2], ARR_CHARS[i][0]);
+		}
+	}
+	else{
+		for(int i=0; i<ARR_CHARS.length; i++){
+			if(!ARR_CHARS[i][0].equals("&")){
+				t = t.replaceAll(ARR_CHARS[i][0], ARR_CHARS[i][2]);
+			}
+		}
+	}
+
+	textArea.setSelectedText(t);
+}
+
+public void setResult(){
+	result = chkInvert.isSelected().toString();
+}
+
+public String getResult(){
+	return result;
+}
+
+showGui();

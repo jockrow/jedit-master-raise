@@ -1,0 +1,19 @@
+# properties for me: Richard
+background.file=%JEDIT_SETTINGS%\images.jpg
+options.quicknotepad.filepath=%JEDIT_SETTINGS%\qn.txt
+vfs.favorite.0=%USER_PROFILE%\%DESKTOP%
+vfs.favorite.1=%USER_PROFILE%\%MY_DOCUMENTS%
+infoviewer.otherBrowser="%CHROME_HOME%" "http://www.google.com/search?sourceid=chrome&ie=UTF-8&q=$u"
+xinsert.inserts-directory=%JEDIT_SETTINGS%\xinsert\
+jindex.lib.doc.0=file:\%JEDIT_HOME%\doc\api/
+jindex.lib.name.0=%JEDIT_HOME%\jedit.jar
+options.antfarm.classpath=%JEDIT_HOME%\jedit.jar
+sidekick.java.classpath=%JEDIT_HOME%\jedit.jar
+Files/Close_All_Except_Active.icon=file:\%JEDIT_HOME%\Close_All_Except_Active.png
+Files/Copy_Name_to_Clipboard.icon=file:\%JEDIT_HOME%\Copy_Name_to_Clipboard.png
+Files/Copy_Path_to_Clipboard.icon=file:\%JEDIT_HOME%\Copy_Path_to_Clipboard.png
+Files/Create_File_Structure.icon=file:\%JEDIT_HOME%\Create_File_Structure.png
+Files/Show_in_WindowsExplorer.icon=file:\%JEDIT_HOME%\Show_in_WindowsExplorer.png
+Text/Get_Screen_Color.icon=file:\%JEDIT_HOME%\Get_Screen_Color.png
+Text/Color_Picker.icon=file:\%JEDIT_HOME%\Color_Picker.png
+sessions.currentSession=default

@@ -1,0 +1,52 @@
+/**********************************************
+*     @author Richard Martínez 2018/12/04     *
+***********************************************/
+/**
+ * Method convertSqlToLanguage()
+ * Convert fields tables to any Language
+ * Sample:
+
+NU TO_INVOICE
+CD_INVOICE
+
+TO:
+
+private String nuToInvoice = "";
+private String cdInvoice = "";
+
+
+public String getNuToInvoice(){
+	return nuToInvoice;
+}
+
+public void setNuToInvoice(String nuToInvoice){
+	this.nuToInvoice = nuToInvoice;
+}
+
+public String getCdInvoice(){
+	return cdInvoice;
+}
+
+public void setCdInvoice(String cdInvoice){
+	this.cdInvoice = cdInvoice;
+}
+*/
+
+public void convertSqlToLanguage(){
+	JEditBuffer bfTmp = openTempBuffer();
+	Macros.getMacro("Editing/First_To_UpperCase").invoke(view);
+
+	replaceSelection("_", "", "");
+	replaceSelection("(^)(\\w)(.*.)($)", "\"private String \" + _2.toLowerCase() + _3 + \" = \\\"\\\";\"", "br");
+
+	String selectedText = textArea.getSelectedText() + "\n\n";
+
+	Macros.getMacro("Java/genGetSet").invoke(view);
+
+	textArea.goToBufferStart(false);
+	textArea.setSelectedText(selectedText);
+
+	closeTempBuffer(bfTmp);
+}
+
+convertSqlToLanguage();

@@ -1,0 +1,45 @@
+<?xml version="1.0" ?>
+<!DOCTYPE COMMANDO SYSTEM "commando.dtd">
+<COMMANDO>
+	<UI>
+		<CAPTION LABEL="Source file(s)">
+			<ENTRY LABEL="jar name" VARNAME="jar" EVAL="console.ConsolePlugin.getClassName(buffer)" />
+			<ENTRY LABEL="Main Class" VARNAME="className" />
+			<DIR_ENTRY LABEL="Current Directory" VARNAME="currentDir" />
+		</CAPTION>
+		<CAPTION LABEL="Advanced">
+			<TOGGLE LABEL="Create Executable jar" VARNAME="executable" />
+			<ENTRY LABEL="Additional parameters" VARNAME="args" DEFAULT="-cvf" />
+		</CAPTION>
+	</UI>
+
+	<COMMANDS>
+		<COMMAND SHELL="System">
+			runCommandInConsole(view,"System", "cd \"" + currentDir + "\"");
+			buf = new StringBuffer();
+			buf.append("\""
+				+ getenv("JAVA_HOME") + File.separator + "bin"
+				+ File.separator + "jar\"");
+
+			if(executable){
+				runCommandInConsole(view,"System", "echo Main-Class: " + className + " >manifest.txt");
+				waitForConsole(view);
+				args = "-cvfm";
+			}
+
+			if(!args.trim().equals("")){
+				buf.append(" " + args);
+			}
+
+			buf.append(" " + jar + ".jar");
+
+			if(executable){
+				buf.append(" manifest.txt");
+			}
+
+			buf.append(" *.class");
+
+			return buf.toString();
+		</COMMAND>
+	</COMMANDS>
+</COMMANDO>

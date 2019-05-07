@@ -1,0 +1,281 @@
+/************************************************
+*			@author Richard Martínez 2010		*
+*************************************************/
+
+/**
+* Setea las variables declaradas de un sp
+*
+* @example
+(@CODIGO VARCHAR(6)=NULL,
+@NOMBRE VARCHAR(10)=NULL)
+values(@CODIGO = '',
+@NOMBRE = 'domiciliar')
+
+POR:
+DECLARE @CODIGO VARCHAR(6)
+,@NOMBRE VARCHAR(10)
+
+SET @CODIGO = ''
+SET @NOMBRE = 'domiciliar'
+
+ o
+
+ (@LINKEO AS VARCHAR(50) ,
+ @strconvenio AS VARCHAR(5) ,
+ @strRegional AS VARCHAR(50) ,
+ @strCadenaPermisos as varchar (50),
+ @strFIni as varchar (10) = NULL ,
+ @PageSize as numeric (18,2)  ,
+ @i_RegInicial int,
+ @i_maxRegistros int
+ )
+ values('PRESTAR.DBO.', '96' ,  '3, 4' ,  '(1,2)' , null,  function(1, 2) ,1 , 30)
+
+ POR:
+ DECLARE @LINKEO AS VARCHAR(50)
+ ,@strconvenio AS VARCHAR(5)
+ ,@strRegional AS VARCHAR(50)
+ ,@strCadenaPermisos AS VARCHAR (50)
+ ,@strFIni AS VARCHAR (10)
+ ,@PageSize AS NUMERIC (18,2)
+ ,@i_RegInicial INT
+ ,@i_maxRegistros INT
+
+ TODO: Se puede usar el transposeMatrix, Corregir para que quede así:
+ SET @LINKEO = 'PRESTAR.DBO.'
+ SET @strconvenio = '96'
+ SET @strRegional = '3, 4'
+ SET @strCadenaPermisos = '(1,2)'
+ SET @strFIni = NULL
+ SET @PageSize = function(1, 2)
+ SET @i_RegInicial = 1
+ SET @i_maxRegistros = 30
+*/
+
+boolean setVariablesSp(){
+	origBf = editPane.getBuffer();
+	String strArroba = "";
+	String strMatchError = "The number rows from this column don't match with anothers columns";
+	String selectedText = textArea.getSelectedText();
+	JeditSql sql = new JeditSql();
+
+	//En el caso que no haya seleccionado nada tomará todo el buffer
+	if(selectedText=="" || selectedText==null){
+		textArea.selectAll();
+		selectedText = textArea.getSelectedText();
+	}
+
+	String strBackup = selectedText;
+	JEditBuffer bfTmp = openTempBuffer();
+
+	// quita los espacios al principio y al final
+	replaceBuffer("\\A$[\\n \\t]+", "", "r");
+	replaceBuffer("[\\n$ \\t]+\\z", "", "r");
+
+	//formateo el texto
+	replaceBuffer("\\)[  \\t]*values[  \\t]*\\(", ")\\nvalues(", "ir");
+
+	if(sql.hasSyntaxError("SP")){
+		return false;
+	}
+
+	//Quita los comentarios
+	replaceBuffer("[ \\t]*--.*|/\\*([\\n\\t ]*([#\\w áéíóú]+\\n)+[\\n\\t ]*)+\\*/", "", "ir");
+
+	//Identifico si el primer caracter es una variable (contiene arroba)
+	findBuffer("values[ \\t]*\\(", "air");
+
+	textArea.goToNextCharacter(false);
+	textArea.goToNextCharacter(true);
+
+	strArroba = textArea.getSelectedText();
+
+	//quito los espacios que puedan haber despues de values(
+	replaceBuffer("values[(] +", "values(", "ir");
+	replaceBuffer("^[ |\\t]+", "", "ir");
+
+	//pongo en un sólo renglón la segunda línea desde la palabra values
+	textArea.goToBufferStart(false);
+	findBuffer("values[ \\t]*\\(", "air");
+
+	textArea.goToStartOfWhiteSpace(false);
+	textArea.goToBufferEnd(true);
+
+	replaceSelection("\n", "", "ir");
+
+	//pongo en un sólo renglón la primera línea desde la palabra values
+	textArea.goToBufferStart(false);
+	findBuffer("values[ \\t]*\\(", "air");
+	textArea.goToStartOfWhiteSpace(false);
+	textArea.goToBufferStart(true);
+	replaceSelection("\n", "", "ir");
+
+	//quito las asignaciones de null y números
+	replaceSelection("=[ ]*([ ]{0,}\\w+|'')", "", "ir");
+
+	textArea.goToNextCharacter(false);
+	textArea.insertEnterAndIndent();
+
+	textArea.goToBufferStart(false);
+	textArea.goToNextLine(false);
+	textArea.goToNextCharacter(true);
+
+	//controlo los valores cuando tienen in(v1,v2,v3,v4)
+	textArea.goToBufferStart(false);
+	textArea.goToEndOfWhiteSpace(true);
+	Registers.cut(textArea,'i');
+	textArea.deleteLine();
+
+	textArea.goToBufferStart(false);
+	textArea.goToNextWord(true,false);
+	textArea.goToNextWord(true,false);
+	Registers.cut(textArea,'s');
+	textArea.goToEndOfWhiteSpace(false);
+	textArea.goToPrevWord(true,false);
+	Registers.cut(textArea,'e');
+
+	textArea.goToBufferStart(false);
+	Registers.paste(textArea,'s',false);
+	Registers.clearRegister('s');
+	textArea.goToEndOfWhiteSpace(false);
+	Registers.paste(textArea,'e',false);
+	Registers.clearRegister('e');
+
+
+	textArea.goToBufferStart(false);
+	Registers.paste(textArea,'i',false);
+	Registers.clearRegister('i');
+	textArea.insertEnterAndIndent();
+
+	//Controlo las posibles comas que se encuentren en las asignaciones cuando tienen in(v1,v2,v3,v4)
+	textArea.goToBufferStart(false);
+	while(findBuffer("[\\(']([ ]*\\w+[, ]+)+", "ir")){
+		replaceSelection(",", "__", "");
+	}
+
+	//Verifico que el número de asignaciones coincida con el número de valores
+	textArea.goToBufferStart(false);
+	int numComaAsig = getNumComa();
+
+	textArea.goToNextLine(false);
+	textArea.goToStartOfWhiteSpace(false);
+	int numComaValue = getNumComa();
+	if(numComaAsig!=numComaValue){
+		closeTempBuffer(bfTmp);
+		Macros.message(view, strMatchError);
+		return false;
+	}
+
+	//Para la segunda línea
+	//En el caso que sea una variable sólo asigno valores a las variables
+	if(strArroba.equals("@")){
+		findBuffer("values[ \\t]*\\(", "air");
+		textArea.goToStartOfWhiteSpace(false);
+		textArea.goToEndOfWhiteSpace(true);
+
+		replaceSelection("values(", "SET ", "i");
+		replaceSelection(",", " SET ", "i");
+		replaceSelection("[)]$", "", "ir");
+	}
+	//En el caso que NO sea una variable, pongo la variable y asigno valores a las variables
+	else{
+		String tmpPrimeraLinea = "";
+
+		textArea.goToBufferStart(false);
+		textArea.goToStartOfWhiteSpace(false);
+		textArea.goToEndOfWhiteSpace(true);
+
+		tmpPrimeraLinea = textArea.getSelectedText();
+
+		//Quito las definiciones de las variables que se encuentran antes de la última definición
+		replaceSelection("[ ]+,", ",", "ir");
+
+		replaceSelection("[ ]+(\\w+)[ ]{0,},|[ ]+(\\w+)[ ]{0,}[(][0-9]+[)][ ]{0,},|[ ]+(\\w+)[ ]{0,}[(][0-9]+,[0-9]+[)][ ]{0,},", ",", "ir");
+
+		//Quito los posibles as que se encuentran antes de la última definición
+		replaceSelection("\\bas[ ]{0,},", ",", "ir");
+
+		//quito la última definición
+		replaceSelection("[ ]+(\\w+)[ ]{0,}[)]|[ ]+(\\w+)[ ]{0,}[(][0-9]+[)][ ]{0,}[)]|[ ]+(\\w+)[ ]{0,}[(][0-9]+,[0-9]+[)][ ]{0,}[)]", ")", "ir");
+
+		//Quito el posible as que se encuentre en la última definición
+		replaceSelection("\\bas[ ]{0,}\\)", ")", "ir");
+
+		textArea.goToBufferStart(false);
+		textArea.setSelectedText("INSERT INTO garbage ");
+
+		sql.convertQuery("INSERT", "CSV");
+		replaceBuffer("[ \\t]+\\w+.*\\t", "\\t", "r");
+		replaceBuffer("Structure table: \\w+\\nFIELD	VALUE\\n", "", "r");
+		replaceBuffer("\t", " = ", "ir");
+		replaceBuffer("^, ", "SET ", "ir");
+		replaceBuffer("\n", " ", "ir");
+
+		textArea.goToBufferStart(false);
+		textArea.setSelectedText(tmpPrimeraLinea);
+		textArea.insertEnterAndIndent();
+		textArea.goToBufferStart(false);
+	}
+
+	//recupero las comas de los valores cuando tienen in(v1,v2,v3,v4)
+	replaceBuffer("__", ",", "r");
+
+	//quito los paréntesis que sobran de la primera línea
+	textArea.goToBufferStart(false);
+	textArea.goToStartOfWhiteSpace(false);
+	textArea.goToEndOfWhiteSpace(true);
+	replaceSelection("(^[ |\\t]*\\()|([ |\\t]*\\))$", "", "ir");
+
+	//quito los paréntesis que sobran de la segunda línea
+	textArea.goToNextLine(false);
+	textArea.goToStartOfWhiteSpace(false);
+	textArea.goToEndOfWhiteSpace(true);
+	textArea.goToEndOfLine(true);
+	replaceSelection("[ ]*\\)[ ]*$", "", "ir");
+
+	//pongo nuevas líneas a todo el documento
+	textArea.goToBufferStart(false);
+	textArea.setSelectedText("DECLARE ");
+
+	textArea.goToNextWord(false,false);
+	textArea.goToEndOfWhiteSpace(true);
+
+	replaceSelection("[ ]{0,},[ ]{0,}@", "\n,@", "ir");
+
+	textArea.goToNextLine(false);
+	textArea.goToStartOfWhiteSpace(false);
+	textArea.goToEndOfWhiteSpace(true);
+
+	replaceSelection("SET", "\\nSET", "ir");
+
+	//quito las variables que están seteadas como default
+	replaceBuffer("^set.*default[ ]*\\n*", "", "ir");
+
+	replaceBuffer("[ \\t]+$", "", "ir");
+
+	// Pongo las palabras reservadas en mayusculas
+	replaceBuffer(new JeditSql().REGEXP_SQL_RESERVED, "_1.toUpperCase()", "br");
+
+	// Quito las palabras reservadas que no sirven
+	replaceBuffer("[ ]*\\bOUTPUT\\b[ ]*", "", "ir");
+
+	closeTempBuffer(bfTmp);
+	return true;
+}
+
+int getNumComa(){
+	int numComa = 0;
+	int currentLine = textArea.caretLine;
+	while(findBuffer(",", "")){
+		numComa++;
+
+		if(currentLine != textArea.caretLine){
+			numComa--;
+			break;
+		}
+	}
+
+	return numComa;
+}
+
+setVariablesSp();
