@@ -1,12 +1,14 @@
 #jEdit's keymap jEdit
 #Wed Mar 27 15:33:01 COT 2019
 Bulk/Insert_Selection.shortcut=CS+o
+Editing/First_To_UpperCase.shortcut=AS+u
 Editing/Move_Lines_Down.shortcut=A+DOWN
 Editing/Move_Lines_Up.shortcut=A+UP
 Files/Copy_Name_to_Clipboard.shortcut=CA+c
 Files/Copy_Path_to_Clipboard.shortcut=CS+c
 Files/Duplicate_Buffer.shortcut=CA+t
 Files/Open_Last_Closed_Buffer.shortcut=CS+t
+Files/Open_Selection.shortcut=CS+f
 Interface/Decrease_Font_Size.shortcut=C+SUBTRACT
 Interface/Increase_Font_Size.shortcut=C+ADD
 SuperAbbrevs.tab.shortcut=TAB
@@ -23,6 +25,7 @@ Text/Encloses/Enc_Round_Bracket_(_).shortcut=AS+8
 Text/Encloses/Enc_Single_Quote_'_'.shortcut=A+QUOTE
 Text/Encloses/Enc_Square_Bracket_[_].shortcut=AS+BRACELEFT
 Text/JcFind.shortcut=C+F3
+Text/joinSmart.shortcut=C+j
 Text/searchBack.shortcut=CS+F3
 action-bar.shortcut=C+ENTER
 add-explicit-fold.shortcut=C+e a

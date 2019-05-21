@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <projects name="All Projects" >
+<project name="custom" file="custom.xml" root="C:\Users\RMARTIN029\AppData\Roaming\jEdit\develop_plugins\custom"  />
+<project name="macros" file="macros.xml" root="C:\Users\RMARTIN029\AppData\Roaming\jEdit\macros"  />
+<project name="openAll" file="openAll.xml" root="C:\Users\RMARTIN029\Documents\GitHub\openAll"  />
+<project name="PostClose" file="PostClose.xml" root="C:\Users\RMARTIN029\AppData\Roaming\jEdit\develop_plugins\postClose"  />
 </projects>
