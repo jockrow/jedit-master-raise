@@ -75,7 +75,8 @@ boolean setVariablesSp(){
 	//formateo el texto
 	replaceBuffer("\\)[  \\t]*values[  \\t]*\\(", ")\\nvalues(", "ir");
 
-	if(sql.hasSyntaxError("SP")){
+	sql.setQueryType("SP");
+	if(sql.hasSyntaxError()){
 		return false;
 	}
 
