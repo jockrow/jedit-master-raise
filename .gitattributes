@@ -4,8 +4,6 @@
 # Custom for Visual Studio
 *.cs     diff=csharp
 
-*.gs linguist-language=Javascript
-
 # Standard to msysgit
 *.doc	 diff=astextplain
 *.DOC	 diff=astextplain
